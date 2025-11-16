@@ -116,9 +116,6 @@ codenarc {
     configFile = file('codenarc.groovy')
 }
 
-// ============================================
-// Gradle Plugin Configuration
-// ============================================
 gradlePlugin {
     plugins {
         fabricLoom {
