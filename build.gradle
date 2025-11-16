@@ -1,36 +1,21 @@
 // ==================================================
-// TotemQuick Fabric Loom Build Script
-// Gradle 8.14 + Java 21 + Kotlin + Spotless
+// TotemQuick Build Script
+// Fabric Loom 1.3.10 + Gradle 8.14
+// Temiz ve düzgün yapılandırılmış
 // ==================================================
-
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url 'https://maven.fabricmc.net/' }
-    }
-    dependencies {
-        classpath "net.fabricmc:fabric-loom:1.3-SNAPSHOT"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21"
-    }
-}
 
 plugins {
     id 'java'
     id 'maven-publish'
-    id 'java-gradle-plugin'
     id 'idea'
     id 'eclipse'
-    id 'groovy'
-    id 'checkstyle'
-    id 'codenarc'
     id 'org.jetbrains.kotlin.jvm' version '2.0.21'
     id 'com.diffplug.spotless' version '7.2.1'
+    id 'fabric-loom' version '1.3.10'
 }
 
-apply plugin: 'fabric-loom'
-
-group = 'net.fabricmc'
-version = '1.13.local'
+group = 'net.yukile'
+version = '1.0.0'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -38,106 +23,52 @@ java {
     withSourcesJar()
 }
 
-tasks.withType(JavaCompile).configureEach {
-    it.options.encoding = 'UTF-8'
-    it.options.release = 21
-}
-
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        jvmTarget = "21"
-    }
-}
-
 repositories {
-    maven { url 'https://maven.fabricmc.net/' }
     mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
 }
 
 dependencies {
-    implementation gradleApi()
-    implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'org.ow2.asm:asm:9.9'
-    implementation 'org.ow2.asm:asm-commons:9.9'
-    implementation 'org.ow2.asm:asm-tree:9.9'
-    implementation 'org.ow2.asm:asm-util:9.9'
-    implementation 'net.fabricmc:stitch:0.6.2'
-    implementation 'net.fabricmc:tiny-remapper:0.12.0'
-    implementation 'net.fabricmc:class-tweaker:0.1.1'
-    implementation 'net.fabricmc:mapping-io:0.8.0'
-    implementation 'net.fabricmc:lorenz-tiny:4.0.2'
-    implementation 'net.fabricmc:mercury:0.4.3'
-    implementation 'net.fabricmc:mercurymixin:0.2.2'
-    implementation 'net.fabricmc:fabric-loom-native:0.2.0'
-    implementation 'net.fabricmc.unpick:unpick:3.0.0-beta.13'
-    implementation 'net.fabricmc.unpick:unpick-format-utils:3.0.0-beta.13'
+    minecraft "com.mojang:minecraft:1.20.1"
+    mappings "net.fabricmc:yarn:1.20.1+build.1:v2"
+    modImplementation "net.fabricmc:fabric-loader:0.17.10"
 
-    // Kotlin
-    implementation 'org.jetbrains.kotlin:kotlin-metadata-jvm:2.0.21'
-    compileOnly 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'
-
-    // Test libs
-    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.0'
-    testImplementation 'org.mockito:mockito-core:5.5.0'
+    // Kotlin ve yardımcı kütüphaneler
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.10.0"
+    testImplementation "org.spockframework:spock-core:2.3-groovy-3.0"
 }
 
-spotless {
-    lineEndings = com.diffplug.spotless.LineEnding.UNIX
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
 
-    java {
-        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
-    }
-
-    kotlin {
-        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
-        ktlint()
-    }
-
-    groovy {
-        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
-        greclipse()
-    }
-
-    groovyGradle {
-        target 'src/**/*.gradle', '*.gradle'
-        greclipse()
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = '21'
     }
 }
 
-checkstyle {
-    toolVersion = '10.26.1'
-    configFile = file('checkstyle.xml')
-}
-
-codenarc {
-    toolVersion = '3.6.0'
-    configFile = file('codenarc.groovy')
-}
-
-gradlePlugin {
-    plugins {
-        fabricLoom {
-            id = 'fabric-loom'
-            implementationClass = 'net.fabricmc.loom.LoomGradlePlugin'
-        }
-        fabricLoomCompanion {
-            id = 'net.fabricmc.fabric-loom-companion'
-            implementationClass = 'net.fabricmc.loom.LoomCompanionGradlePlugin'
-        }
-    }
-}
-
-test {
-    maxHeapSize = "2560m"
+tasks.test {
     useJUnitPlatform()
+    maxHeapSize = '2g'
     testLogging {
         events "passed", "skipped", "failed"
     }
 }
 
-// Publishing
+// Spotless kod formatlama
+spotless {
+    java {
+        googleJavaFormat('1.16.0')
+    }
+    kotlin {
+        ktlint()
+    }
+}
+
+// Yayınlama ayarları
 publishing {
     publications {
         mavenJava(MavenPublication) {
