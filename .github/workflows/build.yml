@@ -22,9 +22,14 @@ jobs:
           distribution: 'temurin'
           java-version: 17
 
-      # 3. gradlew için çalıştırma izni ver
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+      # 3. Gradle wrapper varsa izni ver, yoksa oluştur
+      - name: Ensure gradlew exists and is executable
+        run: |
+          if [ ! -f "./gradlew" ]; then
+            echo "gradlew bulunamadı, wrapper oluşturuluyor..."
+            gradle wrapper
+          fi
+          chmod +x ./gradlew
 
       # 4. Modu derle
       - name: Build mod with Gradle
