@@ -25,3 +25,7 @@ fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric-l
 bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
 bcutil = { module = "org.bouncycastle:bcutil-jdk18on", version.ref = "bouncycastle" }
+
+[bundles]
+test = ["spock", "junit-jupiter-engine", "junit-platform-launcher", "mockito"]
+crypto = ["bcprov", "bcpkix", "bcutil"]
