@@ -1,35 +1,158 @@
 plugins {
-    id 'fabric-loom' version '1.2.61'
     id 'java'
     id 'maven-publish'
+    id 'java-gradle-plugin'
+    id 'idea'
+    id 'eclipse'
+    id 'groovy'
+    id 'checkstyle'
+    id 'codenarc'
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.retry)
+    id "fabric-loom" version "1.3-SNAPSHOT"
 }
 
-group = 'com.yourname.totemquick'
-version = '1.0.0'
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    it.options.release = 21
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "21"
+    }
+}
+
+group = 'net.fabricmc'
+def baseVersion = '1.13'
+
+def ENV = System.getenv()
+if (ENV.BUILD_NUMBER) {
+    if (ENV.EXPERIMENTAL) {
+        version = baseVersion + '.0-alpha.' + ENV.BUILD_NUMBER
+    } else {
+        version = baseVersion + '.' + ENV.BUILD_NUMBER
+    }
+} else {
+    version = baseVersion + '.local'
+}
 
 repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
     mavenCentral()
-    maven { url 'https://maven.fabricmc.net/' }
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+configurations.configureEach {
+    resolutionStrategy {
+        failOnNonReproducibleResolution()
+    }
+
+    if (canBeConsumed)  {
+        attributes {
+            attribute(GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE, objects.named(GradlePluginApiVersion, GradleVersion.current().getVersion()))
+        }
     }
 }
 
 dependencies {
-    // Fabric
-    minecraft "com.mojang:minecraft:1.20.1"
-    mappings "net.fabricmc:yarn:1.20.1+build.1:v2"
-    modImplementation "net.fabricmc:fabric-loader:0.16.14"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:0.88.0+1.20.1"
+    implementation gradleApi()
+    
+    // libraries
+    implementation libs.gson
+    implementation libs.bundles.asm
 
-    // Test libraries
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.13.4'
-    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+    // fabric utils
+    implementation libs.fabric.stitch
+    implementation libs.fabric.tiny.remapper
+    implementation libs.fabric.clazz.tweaker
+    implementation libs.fabric.mapping.io
+    implementation libs.fabric.lorenz.tiny
+    implementation libs.fabric.loom.nativelib
+    implementation libs.fabric.mercury
+    implementation libs.fabric.mercury.mixin
+    implementation libs.fabric.unpick
+    implementation libs.fabric.unpick.utils
+    implementation libs.kotlin.metadata
+    compileOnly libs.kotlin.gradle.plugin
+
+    // testing
+    testImplementation(gradleTestKit())
+    testImplementation(testLibs.spock) { exclude module: 'groovy-all' }
+    testImplementation testLibs.junit.jupiter.engine
+    testRuntimeOnly testLibs.junit.platform.launcher
+    testImplementation testLibs.javalin
+    testImplementation testLibs.mockito
+    testImplementation testLibs.java.debug
+    testImplementation testLibs.bcprov
+    testImplementation testLibs.bcutil
+    testImplementation testLibs.bcpkix
+    testImplementation testLibs.fabric.loader
+    testCompileOnly(testLibs.mixin) { transitive = false }
 }
 
-tasks.withType(Test) {
-    useJUnitPlatform()
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
+
+spotless {
+    lineEndings = com.diffplug.spotless.LineEnding.UNIX
+
+    java {
+        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
+        targetExclude("**/loom/util/DownloadUtil.java")
+    }
+
+    groovy {
+        importOrder('java', 'javax', '', 'net.fabricmc', '\\#')
+        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
+        greclipse()
+    }
+
+    groovyGradle {
+        target 'src/**/*.gradle', '*.gradle'
+        greclipse()
+    }
+
+    kotlin {
+        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
+        targetExclude("**/build.gradle.kts")
+        targetExclude("src/test/resources/projects/*/**")
+        ktlint()
+    }
+}
+
+checkstyle {
+    configFile = file('checkstyle.xml')
+    toolVersion = libs.versions.checkstyle.get()
+}
+
+codenarc {
+    toolVersion = libs.versions.codenarc.get()
+    configFile = file("codenarc.groovy")
+}
+
+gradlePlugin {
+    plugins {
+        fabricLoom {
+            id = 'fabric-loom'
+            implementationClass = 'net.fabricmc.loom.LoomGradlePlugin'
+        }
+        fabricLoomCompanion {
+            id = 'net.fabricmc.fabric-loom-companion'
+            implementationClass = 'net.fabricmc.loom.LoomCompanionGradlePlugin'
+        }
+    }
+}
+
+repositories {
+    maven { url = 'https://maven.fabricmc.net/' }
+    mavenCentral()
+}
+
+apply from: rootProject.file('gradle/versions.gradle')
