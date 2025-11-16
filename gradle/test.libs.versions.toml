@@ -34,7 +34,7 @@ fabric-clazz-tweaker = { module = "net.fabricmc:class-tweaker", version.ref = "c
 fabric-mapping-io = { module = "net.fabricmc:mapping-io", version.ref = "mapping-io" }
 fabric-lorenz-tiny = { module = "net.fabricmc:lorenz-tiny", version.ref = "lorenz-tiny" }
 fabric-mercury = { module = "net.fabricmc:mercury", version.ref = "mercury" }
-fabric-mercury-mixin = { module = "net.fabricmc:mercurymixin", version.ref = "mercury-mixin" }
+fabric-mercury-mixin = { module = "net.fabricmc:mercury-mixin", version.ref = "mercury-mixin" }
 fabric-loom-nativelib = { module = "net.fabricmc:fabric-loom-native", version.ref = "loom-native" }
 fabric-unpick = { module = "net.fabricmc.unpick:unpick", version.ref = "unpick" }
 fabric-unpick-utils = { module = "net.fabricmc.unpick:unpick-format-utils", version.ref = "unpick" }
