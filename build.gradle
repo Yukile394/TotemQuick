@@ -1,3 +1,8 @@
+// ==================================================
+// TotemQuick Fabric Loom Build Script
+// Gradle 8.14 + Java 21 + Kotlin + Spotless
+// ==================================================
+
 plugins {
     id 'java'
     id 'maven-publish'
@@ -7,25 +12,34 @@ plugins {
     id 'groovy'
     id 'checkstyle'
     id 'codenarc'
-    id 'org.jetbrains.kotlin.jvm' version '1.9.0'
+    id 'org.jetbrains.kotlin.jvm' version '2.0.21'
     id 'com.diffplug.spotless' version '7.2.1'
-    id 'org.gradle.test-retry' version '1.6.2'
-    id 'fabric-loom' version '1.2.61'
 }
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url 'https://maven.fabricmc.net/' }
+    }
+    dependencies {
+        classpath "net.fabricmc:fabric-loom:1.3-SNAPSHOT"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21"
+    }
+}
+
+apply plugin: 'fabric-loom'
 
 group = 'net.fabricmc'
 version = '1.13.local'
 
-repositories {
-    maven {
-        name = 'Fabric'
-        url = 'https://maven.fabricmc.net/'
-    }
-    mavenCentral()
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
 }
 
 tasks.withType(JavaCompile).configureEach {
-    it.options.encoding = "UTF-8"
+    it.options.encoding = 'UTF-8'
     it.options.release = 21
 }
 
@@ -35,61 +49,114 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     }
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-    withSourcesJar()
+repositories {
+    maven { url 'https://maven.fabricmc.net/' }
+    mavenCentral()
 }
 
 dependencies {
     implementation gradleApi()
-    implementation "com.google.code.gson:gson:2.10.1"
-    implementation "org.ow2.asm:asm:9.9"
-    implementation "org.ow2.asm:asm-commons:9.9"
-    implementation "org.ow2.asm:asm-analysis:9.9"
-    implementation "org.ow2.asm:asm-tree:9.9"
-    implementation "org.ow2.asm:asm-util:9.9"
-
-    // Fabric Loom dependencies
-    implementation "net.fabricmc:stitch:0.6.2"
-    implementation "net.fabricmc:tiny-remapper:0.12.0"
-    implementation "net.fabricmc:class-tweaker:0.1.1"
-    implementation "net.fabricmc:mapping-io:0.8.0"
-    implementation "net.fabricmc:lorenz-tiny:4.0.2"
-    implementation "net.fabricmc:mercury:0.4.3"
-    implementation "net.fabricmc:mercurymixin:0.2.2"
-    implementation "net.fabricmc:fabric-loom-native:0.2.0"
-    implementation "net.fabricmc.unpick:unpick:3.0.0-beta.13"
-    implementation "net.fabricmc.unpick:unpick-format-utils:3.0.0-beta.13"
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.ow2.asm:asm:9.9'
+    implementation 'org.ow2.asm:asm-commons:9.9'
+    implementation 'org.ow2.asm:asm-tree:9.9'
+    implementation 'org.ow2.asm:asm-util:9.9'
+    implementation 'net.fabricmc:stitch:0.6.2'
+    implementation 'net.fabricmc:tiny-remapper:0.12.0'
+    implementation 'net.fabricmc:class-tweaker:0.1.1'
+    implementation 'net.fabricmc:mapping-io:0.8.0'
+    implementation 'net.fabricmc:lorenz-tiny:4.0.2'
+    implementation 'net.fabricmc:mercury:0.4.3'
+    implementation 'net.fabricmc:mercurymixin:0.2.2'
+    implementation 'net.fabricmc:fabric-loom-native:0.2.0'
+    implementation 'net.fabricmc.unpick:unpick:3.0.0-beta.13'
+    implementation 'net.fabricmc.unpick:unpick-format-utils:3.0.0-beta.13'
 
     // Kotlin
-    implementation "org.jetbrains.kotlin:kotlin-metadata-jvm:2.0.21"
-    compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21"
+    implementation 'org.jetbrains.kotlin:kotlin-metadata-jvm:2.0.21'
+    compileOnly 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'
 
-    // Testing
-    testImplementation gradleTestKit()
+    // Test libs (örnek)
+    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.0'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
 }
 
+spotless {
+    lineEndings = com.diffplug.spotless.LineEnding.UNIX
+
+    java {
+        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
+    }
+
+    kotlin {
+        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
+        ktlint()
+    }
+
+    groovy {
+        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
+        greclipse()
+    }
+
+    groovyGradle {
+        target 'src/**/*.gradle', '*.gradle'
+        greclipse()
+    }
+}
+
+checkstyle {
+    toolVersion = '10.26.1'
+    configFile = file('checkstyle.xml')
+}
+
+codenarc {
+    toolVersion = '3.6.0'
+    configFile = file('codenarc.groovy')
+}
+
+// ============================================
+// Gradle Plugin Configuration
+// ============================================
 gradlePlugin {
     plugins {
         fabricLoom {
             id = 'fabric-loom'
             implementationClass = 'net.fabricmc.loom.LoomGradlePlugin'
         }
+        fabricLoomCompanion {
+            id = 'net.fabricmc.fabric-loom-companion'
+            implementationClass = 'net.fabricmc.loom.LoomCompanionGradlePlugin'
+        }
     }
 }
 
-spotless {
-    lineEndings = com.diffplug.spotless.LineEnding.UNIX
-    java {
-        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
+test {
+    maxHeapSize = "2560m"
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
     }
-    groovy {
-        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
-        greclipse()
+}
+
+// Publishing (örnek)
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = project.group
+            artifactId = project.name
+            version = project.version
+        }
     }
-    kotlin {
-        licenseHeaderFile(rootProject.file("HEADER")).yearSeparator("-")
-        ktlint()
+    repositories {
+        maven {
+            url = System.getenv("MAVEN_URL") ?: ""
+            credentials {
+                username = System.getenv("MAVEN_USERNAME") ?: ""
+                password = System.getenv("MAVEN_PASSWORD") ?: ""
+            }
+        }
     }
 }
