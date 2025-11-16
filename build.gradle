@@ -3,6 +3,17 @@
 // Gradle 8.14 + Java 21 + Kotlin + Spotless
 // ==================================================
 
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url 'https://maven.fabricmc.net/' }
+    }
+    dependencies {
+        classpath "net.fabricmc:fabric-loom:1.3-SNAPSHOT"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21"
+    }
+}
+
 plugins {
     id 'java'
     id 'maven-publish'
@@ -14,17 +25,6 @@ plugins {
     id 'codenarc'
     id 'org.jetbrains.kotlin.jvm' version '2.0.21'
     id 'com.diffplug.spotless' version '7.2.1'
-}
-
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url 'https://maven.fabricmc.net/' }
-    }
-    dependencies {
-        classpath "net.fabricmc:fabric-loom:1.3-SNAPSHOT"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21"
-    }
 }
 
 apply plugin: 'fabric-loom'
@@ -76,7 +76,7 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-metadata-jvm:2.0.21'
     compileOnly 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'
 
-    // Test libs (örnek)
+    // Test libs
     testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.0'
@@ -140,7 +140,7 @@ test {
     }
 }
 
-// Publishing (örnek)
+// Publishing
 publishing {
     publications {
         mavenJava(MavenPublication) {
