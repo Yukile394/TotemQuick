@@ -1,95 +1,66 @@
-// ==================================================
-// TotemQuick Build Script
-// Fabric Loom 1.3.10 + Gradle 8.14
-// Temiz yapılandırma ve güncel loader
-// ==================================================
-
 plugins {
-    id 'java'
+    id 'fabric-loom' version '1.3.10' // güncel Loom sürümü
     id 'maven-publish'
-    id 'idea'
-    id 'eclipse'
-    id 'org.jetbrains.kotlin.jvm' version '2.0.21'
-    id 'com.diffplug.spotless' version '7.2.1'
-    id 'fabric-loom' version '1.3.10'
 }
 
-group = 'net.yukile'
-version = '1.0.0'
+group = project.maven_group
+version = project.mod_version
+archivesBaseName = project.archives_base_name
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-    withSourcesJar()
-}
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()
-    maven { url = 'https://maven.fabricmc.net/' } // Fabric repository
-    maven { url = 'https://maven.terraformersmc.com/releases' } // Yarn repo
-    maven { url = 'https://repo.spongepowered.org/maven' } // Gerektiğinde ek repo
+    maven { url = 'https://maven.fabricmc.net/' }
 }
 
 dependencies {
-    // Minecraft ve mappings
-    minecraft "com.mojang:minecraft:1.20.1"
-    mappings "net.fabricmc:yarn:1.20.1+build.1:v2"
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+}
 
-    // Fabric Loader güncel sürüm
-    modImplementation "net.fabricmc:fabric-loader:0.17.12"
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
 
-    // Kotlin ve yardımcı kütüphaneler
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"
-    testImplementation "org.junit.jupiter:junit-jupiter:5.10.0"
-    testImplementation "org.spockframework:spock-core:2.3-groovy-3.0"
+loom {
+    accessWidenerPath = file("src/main/resources/multiplayerbutton.accesswidener")
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-    options.release = 21
-}
-
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-    kotlinOptions {
-        jvmTarget = '21'
+    options.encoding = "UTF-8"
+    if (JavaVersion.current().isJava9Compatible()) {
+        options.release = 17
     }
 }
 
-tasks.test {
-    useJUnitPlatform()
-    maxHeapSize = '2g'
-    testLogging {
-        events "passed", "skipped", "failed"
+java {
+    withSourcesJar()
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archivesBaseName}" }
     }
 }
 
-// Spotless kod formatlama
-spotless {
-    java {
-        googleJavaFormat('1.16.0')
-    }
-    kotlin {
-        ktlint()
-    }
-}
-
-// Yayınlama ayarları
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            from components.java
-            groupId = project.group
-            artifactId = project.name
-            version = project.version
+            artifact(remapJar) {
+                builtBy remapJar
+            }
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
+            }
         }
     }
     repositories {
-        maven {
-            url = System.getenv("MAVEN_URL") ?: ""
-            credentials {
-                username = System.getenv("MAVEN_USERNAME") ?: ""
-                password = System.getenv("MAVEN_PASSWORD") ?: ""
-            }
-        }
+        // Yayınlamak için repository ekleyebilirsiniz.
     }
 }
