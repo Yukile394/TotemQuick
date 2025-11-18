@@ -4,16 +4,14 @@
   "version": "1.0.0",
   "name": "TotemQuick",
   "description": "Automatically moves a totem to your offhand when needed.",
-  "authors": [
-    "Yukile"
-  ],
+  "authors": ["Yukile"],
   "contact": {
     "repo": "https://github.com/Yukile394/TotemQuick"
   },
   "license": "MIT",
-  "icon": "icon.png",
+  "icon": "assets/totemquick/icon.png",
 
-  "environment": "*",
+  "environment": "client",
 
   "mixins": [
     "totemquick.mixins.json"
@@ -25,7 +23,7 @@
     ]
   },
 
-  "accessWidener": "multiplayerbutton.accesswidener",
+  "accessWidener": "totemquick.accesswidener",
 
   "depends": {
     "fabricloader": ">=0.15.7",
