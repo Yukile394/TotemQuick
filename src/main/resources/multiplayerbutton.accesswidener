@@ -1,1 +1,7 @@
-# TotemQuick access widener
+accessWidener 1.0 minecraft
+
+# Örnek: bir sınıfı public yap
+# public class com.example.MyClass
+
+# Örnek: bir methodu public yap
+# public method com.example.MyClass myMethod ()V
