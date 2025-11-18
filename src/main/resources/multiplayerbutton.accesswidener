@@ -1,4 +1,4 @@
 accessWidener v1 minecraft
 
-# Örnek: TotemQuickClient sınıfının public olması için
-public class com.exloran.totemquick.TotemQuickClient
+# Sınıfı erişilebilir yapmak için
+accessible class com.exloran.totemquick.TotemQuickClient
