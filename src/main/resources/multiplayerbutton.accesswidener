@@ -1,8 +1,6 @@
-# ===========================================
+accessWidener v1 minecraft
+
 # TotemQuick Mod AccessWidener
-# ===========================================
-# Açıklama: Multiplayer buton ve client sınıflarına erişim izni
-# Format: slash (/) kullanıldı, nokta (.) yok
-# ===========================================
+# Multiplayer buton ve client sınıflarına erişim izni
 
 accessible class public com/exloran/totemquick/TotemQuickClient
