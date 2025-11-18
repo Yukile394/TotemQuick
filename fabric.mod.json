@@ -23,7 +23,7 @@
     ]
   },
 
-"accessWidener": "totemquick.accesswidener",
+"accessWidener": "multiplayerbutton.accesswidener"
 
   "depends": {
     "fabricloader": ">=0.15.7",
