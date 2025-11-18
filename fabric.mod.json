@@ -1,55 +1,35 @@
 {
   "schemaVersion": 1,
-  "id": "totem-quick",
+  "id": "totemquick",
   "version": "1.0.0",
-
-  "name": "Totem Quick",
-  "description": "CTRL veya V tuşuna basınca envanterdeki ilk totemi off-hand slotuna takar.",
+  "name": "TotemQuick",
+  "description": "Automatically moves a totem to your offhand when needed.",
   "authors": [
     "Yukile"
   ],
   "contact": {
-    "homepage": "https://github.com/Yukile/TotemQuick",
-    "sources": "https://github.com/Yukile/TotemQuick"
+    "repo": "https://github.com/Yukile394/TotemQuick"
   },
+  "license": "MIT",
+  "icon": "icon.png",
 
-  "license": [
-    "CC0-1.0"
+  "environment": "*",
+
+  "mixins": [
+    "totemquick.mixins.json"
   ],
-  "icon": "assets/totem_quick/icon.png",
 
-  "environment": "client",
   "entrypoints": {
     "client": [
-      "com.totemquick.TotemQuick"
+      "com.exloran.totemquick.TotemQuickClient"
     ]
   },
 
-  "mixins": [
-    "totem_quick.mixins.json"
-  ],
+  "accessWidener": "multiplayerbutton.accesswidener",
 
   "depends": {
-    "fabricloader": ">=0.14.21",
-    "fabric": "*",
-    "minecraft": "~1.20.1",
-    "java": ">=17"
-  },
-
-  "accessWidener": "totem_quick.accesswidener",
-
-  "suggests": {
-    "another-mod": "*"
-  },
-
-  "breaks": {
-    "modernfix": "*",
-    "wurst": "*",
-    "essential": "*"
-  },
-
-  "custom": {
-    "modmenu:clientsideOnly": true,
-    "modmenu:api": false
+    "fabricloader": ">=0.15.7",
+    "minecraft": "1.20.1",
+    "fabric-api": "*"
   }
 }
