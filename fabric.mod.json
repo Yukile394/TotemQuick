@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "totem-quick",
+  "version": "1.0.0",
+
+  "name": "Totem Quick",
+  "description": "CTRL veya V tuşuna basınca envanterdeki ilk totemi off-hand slotuna takar.",
+  "authors": [
+    "Yukile"
+  ],
+  "contact": {
+    "homepage": "https://github.com/Yukile/TotemQuick",
+    "sources": "https://github.com/Yukile/TotemQuick"
+  },
+
+  "license": [
+    "CC0-1.0"
+  ],
+  "icon": "assets/totem_quick/icon.png",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.totemquick.TotemQuick"
+    ]
+  },
+
+  "mixins": [
+    "totem_quick.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.14.21",
+    "fabric": "*",
+    "minecraft": "~1.20.1",
+    "java": ">=17"
+  },
+
+  "accessWidener": "totem_quick.accesswidener",
+
+  "suggests": {
+    "another-mod": "*"
+  },
+
+  "breaks": {
+    "modernfix": "*",
+    "wurst": "*",
+    "essential": "*"
+  },
+
+  "custom": {
+    "modmenu:clientsideOnly": true,
+    "modmenu:api": false
+  }
+}
