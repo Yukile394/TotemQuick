@@ -1,3 +1,6 @@
-accessWidener v1 named
+accessWidener v1 minecraft
 
-accessible class java/com/exloran/totemquick
+# TotemQuick Mod AccessWidener
+# Multiplayer button and client class access
+
+accessible class public com/exloran/totemquick/TotemQuickClient
