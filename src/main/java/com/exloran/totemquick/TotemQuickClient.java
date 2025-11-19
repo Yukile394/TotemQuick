@@ -1,4 +1,4 @@
-package com.exloran.totemquick.TotemQuickClient;
+package com.exloran.totemquick;
 
 import net.fabricmc.api.ClientModInitializer;
 
