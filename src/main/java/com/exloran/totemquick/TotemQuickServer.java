@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 public class TotemQuickServer implements ClientModInitializer {
@@ -13,21 +14,20 @@ public class TotemQuickServer implements ClientModInitializer {
     
     @Override
     public void onInitializeClient() {
-        // Totem takası için bir tuş atayalım (ÖRNEK: "K" tuşu)
+        // K tuşu ile totem takası
         totemKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.totemquick.swap", // çeviri anahtarı
+            "key.totemquick.swap",
             InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_K, // K tuşu
-            "category.totemquick.main" // kategori
+            GLFW.GLFW_KEY_K,
+            "category.totemquick.main"
         ));
         
         // Her tick'te tuş kontrolü
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (totemKey.wasPressed()) {
-                // Totem takas kodu buraya gelecek
                 if (client.player != null) {
-                    // Örnek: Oyuncuya mesaj gönder
-                    client.player.sendMessage(net.minecraft.text.Text.literal("Totem takası aktif!"), false);
+                    client.player.sendMessage(Text.literal("Totem takası aktif!"), false);
+                    // Buraya totem takas kodu gelecek
                 }
             }
         });
