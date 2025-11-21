@@ -5,25 +5,13 @@
   "name": "TotemQuick",
   "description": "Tek tuşla Ölümsüz Totemi'ni donatan basit bir Kumaş modu. Minecraft 1.20.1",
   "authors": ["Yukile"],
-  "contact": {
-    "homepage": "",
-    "sources": ""
-  },
   "license": "All-Rights-Reserved",
-  "icon": "assets/totemquick/icon.png",
-
-  "environment": "client",
-
+  "environment": "*",
   "entrypoints": {
-    "client": [
-      "com.exloran.totemquick.TotemQuickClient"
+    "main": [
+      "com.exloran.totemquick.TotemQuickServer"
     ]
   },
-
-  "mixins": [
-    "totemquick.mixins.json"
-  ],
-
   "depends": {
     "fabricloader": ">=0.14.0",
     "fabric-api": "*",
