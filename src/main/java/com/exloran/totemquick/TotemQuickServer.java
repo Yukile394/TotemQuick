@@ -3,27 +3,22 @@ package com.exloran.totemquick;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.screen.GenericContainerScreenHandler;
-import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 public class TotemQuickServer implements ClientModInitializer {
 
-    private static KeyBinding totemKey;
+    private KeyBinding totemKey;
 
     @Override
     public void onInitializeClient() {
 
-        // -----------------------------
-        //  K TUŞU — TOTEM TİCARETİ
-        // -----------------------------
-
+        // K tuşu
         totemKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.totemquick.swap",
                 InputUtil.Type.KEYSYM,
@@ -31,36 +26,55 @@ public class TotemQuickServer implements ClientModInitializer {
                 "category.totemquick.main"
         ));
 
+        // Her tick kontrol
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (totemKey.wasPressed()) {
                 if (client.player != null) {
-                    client.player.sendMessage(Text.literal("Totem takası aktif!"), false);
+                    swapTotem();
                 }
             }
         });
+    }
 
+    private void swapTotem() {
+        MinecraftClient client = MinecraftClient.getInstance();
 
-        // -----------------------------
-        //  DUPE BUTONU — ENVANTER SOL KENAR
-        // -----------------------------
-        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+        if (client.player == null) return;
 
-            // Sadece envanter ekranında gözüksün
-            if (!(screen instanceof net.minecraft.client.gui.screen.ingame.InventoryScreen)) return;
+        var inv = client.player.getInventory();
 
-            int x = 10; // Sol taraf
-            int y = screen.height / 2 - 10;
+        // Zaten offhand'de totem varsa hiçbir şey yapma
+        if (client.player.getOffHandStack().getItem() == Items.TOTEM_OF_UNDYING) {
+            client.player.sendMessage(Text.literal("Zaten offhand'de totem var."), false);
+            return;
+        }
 
-            screen.addDrawableChild(
-                ButtonWidget.builder(Text.literal("DUPE"), button -> {
+        // Hotbarda totem ara
+        int totemSlot = -1;
 
-                    if (client.player != null) {
-                        // /dupe komutu gönder
-                        client.player.networkHandler.sendChatCommand("dupe");
-                    }
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = inv.getStack(i);
+            if (stack.getItem() == Items.TOTEM_OF_UNDYING) {
+                totemSlot = i;
+                break;
+            }
+        }
 
-                }).dimensions(x, y, 60, 20).build()
-            );
-        });
+        if (totemSlot == -1) {
+            client.player.sendMessage(Text.literal("Hotbar'da totem yok!"), false);
+            return;
+        }
+
+        // Hotbar’daki totem
+        ItemStack totem = inv.getStack(totemSlot);
+
+        // Offhand’deki mevcut item
+        ItemStack offhand = client.player.getOffHandStack();
+
+        // Yer değiştir
+        inv.setStack(totemSlot, offhand);
+        client.player.getInventory().offHand.set(0, totem);
+
+        client.player.sendMessage(Text.literal("Totem Offhand'e takıldı!"), false);
     }
 }
