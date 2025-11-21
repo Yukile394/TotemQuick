@@ -6,7 +6,6 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-// Gradle.properties'tan proje bilgilerini al
 group = project.property("maven_group")
 version = project.property("mod_version")
 archivesBaseName = project.property("archives_base_name")
