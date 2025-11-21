@@ -6,13 +6,13 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-// Gradle.properties üzerinden proje bilgilerini al
+// Gradle.properties'tan proje bilgilerini al
 group = project.property("maven_group")
 version = project.property("mod_version")
 archivesBaseName = project.property("archives_base_name")
 
 repositories {
-    // Loom zaten gerekli Maven repo'larını otomatik ekler
+    // Loom gerekli Maven repo'larını otomatik ekler
 }
 
 dependencies {
@@ -20,7 +20,7 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.property("yarn_mappings")}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.property("loader_version")}"
     
-    // Fabric API eklendi
+    // Fabric API
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}"
 }
 
@@ -30,11 +30,6 @@ processResources {
     filesMatching("fabric.mod.json") {
         expand "version": project.version
     }
-}
-
-loom {
-    // Access Widener yolu düzenlendi
-    accessWidenerPath = file("src/main/resources/totemquick.accesswidener")
 }
 
 tasks.withType(JavaCompile).configureEach {
