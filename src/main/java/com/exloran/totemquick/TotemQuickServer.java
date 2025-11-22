@@ -1,6 +1,4 @@
-package com.exloran.totemquick;
-
-import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
@@ -10,23 +8,22 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.PacketByteBuf;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.World;
 
 import net.minecraft.text.Text;
 
 import org.lwjgl.glfw.GLFW;
 
-public class TotemQuickServer implements ClientModInitializer {
-    private static final Identifier SWAP_PACKET = new Identifier("totemquick", "swap");
+public class AutoTotemDuplication implements ClientModInitializer {
+    private static final Identifier SWAP_PACKET = new Identifier("auto_totem_duplication", "swap");
 
     @Override
     public void onInitializeClient() {
         // K tuşu ile totem takası
         totemKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.totemquick.swap",
+            "key.auto_totem_duplication.swap",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_K,
-            "category.totemquick.main"
+            "category.auto_totem_duplication.main"
         ));
         
         // Her tick'te tuş kontrolü
