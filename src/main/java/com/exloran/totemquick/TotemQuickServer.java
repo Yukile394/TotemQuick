@@ -1,57 +1,47 @@
 package com.exloran.totemquick;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
-import org.lwjgl.glfw.GLFW;
 
 public class TotemQuickServer implements ClientModInitializer {
-
-    private KeyBinding totemKey;
 
     @Override
     public void onInitializeClient() {
 
-        // K tuşu
-        totemKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.totemquick.swap",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_K,
-                "category.totemquick.main"
-        ));
-
-        // Her tick kontrol
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (totemKey.wasPressed()) {
-                if (client.player != null) {
-                    swapTotem();
-                }
+        // Inventory ekranı açıldığında buton ekle
+        ScreenMouseEvents.afterInit((screen, scaledWidth, scaledHeight) -> {
+            if (screen.getClass().getSimpleName().equals("InventoryScreen")) {
+                // Sol üst köşe konumu: x=10, y=10, boyut: 80x20
+                ButtonWidget totemButton = new ButtonWidget(
+                        10, 10, 80, 20,
+                        Text.literal("Totem Ekle"),
+                        button -> addTotemToOffhand()
+                );
+                screen.addDrawableChild(totemButton);
             }
         });
     }
 
-    private void swapTotem() {
+    private void addTotemToOffhand() {
         MinecraftClient client = MinecraftClient.getInstance();
-
         if (client.player == null) return;
 
         var inv = client.player.getInventory();
 
-        // Zaten offhand'de totem varsa hiçbir şey yapma
+        // Offhand zaten totem ise uyar
         if (client.player.getOffHandStack().getItem() == Items.TOTEM_OF_UNDYING) {
             client.player.sendMessage(Text.literal("Zaten offhand'de totem var."), false);
             return;
         }
 
-        // Hotbarda totem ara
+        // Hotbar'da totem ara
         int totemSlot = -1;
-
         for (int i = 0; i < 9; i++) {
             ItemStack stack = inv.getStack(i);
             if (stack.getItem() == Items.TOTEM_OF_UNDYING) {
@@ -65,13 +55,10 @@ public class TotemQuickServer implements ClientModInitializer {
             return;
         }
 
-        // Hotbar’daki totem
+        // Totemi offhand’e koy, hotbardaki yerini boşalt
         ItemStack totem = inv.getStack(totemSlot);
-
-        // Offhand’deki mevcut item
         ItemStack offhand = client.player.getOffHandStack();
 
-        // Yer değiştir
         inv.setStack(totemSlot, offhand);
         client.player.getInventory().offHand.set(0, totem);
 
