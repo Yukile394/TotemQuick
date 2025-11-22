@@ -18,7 +18,7 @@
 
   "entrypoints": {
     "client": [
-      "com.exloran.totemquick.TotemQuickClient"
+      "com.exloran.totemquick.TotemQuickServer"
     ]
   },
 
