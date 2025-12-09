@@ -1,80 +1,70 @@
 package com.exloran.totemquick;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
-import org.lwjgl.glfw.GLFW;
 
 public class TotemQuickServer implements ClientModInitializer {
-
-    private KeyBinding totemKey;
 
     @Override
     public void onInitializeClient() {
 
-        // K tuşu
-        totemKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.totemquick.swap",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_K,
-                "category.totemquick.main"
-        ));
+        // Envanter açıldığında buton ekle
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
 
-        // Her tick kontrol
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (totemKey.wasPressed()) {
-                if (client.player != null) {
-                    swapTotem();
-                }
-            }
+            if (screen == null || client.player == null) return;
+
+            // Buton yerleşimi
+            int x = screen.width / 2 + 80;
+            int y = screen.height / 2 - 100;
+
+            screen.addDrawableChild(
+                    ButtonWidget.builder(Text.literal("Babakral Dupe"), button -> {
+
+                        MinecraftClient mc = MinecraftClient.getInstance();
+
+                        // 1. SLOT tıklama
+                        mc.interactionManager.clickSlot(
+                                mc.player.currentScreenHandler.syncId,
+                                15, // fotoğraftaki slot
+                                1,
+                                SlotActionType.QUICK_MOVE,
+                                mc.player
+                        );
+
+                        // Chat gönder
+                        mc.player.networkHandler.sendChatMessage("/ah sell 70");
+
+                        // 2. SLOT tıklamasını 600 ms geciktirerek çalıştır
+                        new java.util.Timer().schedule(
+                                new java.util.TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        MinecraftClient.getInstance().execute(() -> {
+
+                                            MinecraftClient mc2 = MinecraftClient.getInstance();
+
+                                            mc2.interactionManager.clickSlot(
+                                                    mc2.player.currentScreenHandler.syncId,
+                                                    10,
+                                                    0,
+                                                    SlotActionType.QUICK_MOVE,
+                                                    mc2.player
+                                            );
+
+                                        });
+                                    }
+                                },
+                                600
+                        );
+
+                    }).dimensions(x, y, 95, 20).build()
+            );
+
         });
-    }
-
-    private void swapTotem() {
-        MinecraftClient client = MinecraftClient.getInstance();
-
-        if (client.player == null) return;
-
-        var inv = client.player.getInventory();
-
-        // Zaten offhand'de totem varsa hiçbir şey yapma
-        if (client.player.getOffHandStack().getItem() == Items.TOTEM_OF_UNDYING) {
-            client.player.sendMessage(Text.literal("Zaten offhand'de totem var."), false);
-            return;
-        }
-
-        // Hotbarda totem ara
-        int totemSlot = -1;
-
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = inv.getStack(i);
-            if (stack.getItem() == Items.TOTEM_OF_UNDYING) {
-                totemSlot = i;
-                break;
-            }
-        }
-
-        if (totemSlot == -1) {
-            client.player.sendMessage(Text.literal("Hotbar'da totem yok!"), false);
-            return;
-        }
-
-        // Hotbar’daki totem
-        ItemStack totem = inv.getStack(totemSlot);
-
-        // Offhand’deki mevcut item
-        ItemStack offhand = client.player.getOffHandStack();
-
-        // Yer değiştir
-        inv.setStack(totemSlot, offhand);
-        client.player.getInventory().offHand.set(0, totem);
-
-        client.player.sendMessage(Text.literal("Totem Offhand'e takıldı!"), false);
     }
 }
