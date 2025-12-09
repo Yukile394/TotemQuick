@@ -7,63 +7,61 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import net.minecraft.client.gui.ScreenAccessor;
 
 public class TotemQuickServer implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
 
-        // Envanter açıldığında buton ekle
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
 
-            if (screen == null || client.player == null) return;
+            if (client.player == null || screen == null) return;
 
-            // Buton yerleşimi
             int x = screen.width / 2 + 80;
             int y = screen.height / 2 - 100;
 
-            screen.addDrawableChild(
-                    ButtonWidget.builder(Text.literal("Babakral Dupe"), button -> {
+            ButtonWidget button = ButtonWidget.builder(Text.literal("Babakral Dupe"), b -> {
 
-                        MinecraftClient mc = MinecraftClient.getInstance();
+                MinecraftClient mc = MinecraftClient.getInstance();
 
-                        // 1. SLOT tıklama
-                        mc.interactionManager.clickSlot(
-                                mc.player.currentScreenHandler.syncId,
-                                15, // fotoğraftaki slot
-                                1,
-                                SlotActionType.QUICK_MOVE,
-                                mc.player
-                        );
+                // SLOT 15 tıklama
+                mc.interactionManager.clickSlot(
+                        mc.player.currentScreenHandler.syncId,
+                        15,
+                        1,
+                        SlotActionType.QUICK_MOVE,
+                        mc.player
+                );
 
-                        // Chat gönder
-                        mc.player.networkHandler.sendChatMessage("/ah sell 70");
+                // Chat mesajı
+                mc.player.networkHandler.sendChatMessage("/ah sell 70");
 
-                        // 2. SLOT tıklamasını 600 ms geciktirerek çalıştır
-                        new java.util.Timer().schedule(
-                                new java.util.TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        MinecraftClient.getInstance().execute(() -> {
+                // 600 ms gecikmeli ikinci click
+                new java.util.Timer().schedule(new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        MinecraftClient.getInstance().execute(() -> {
 
-                                            MinecraftClient mc2 = MinecraftClient.getInstance();
+                            MinecraftClient mc2 = MinecraftClient.getInstance();
 
-                                            mc2.interactionManager.clickSlot(
-                                                    mc2.player.currentScreenHandler.syncId,
-                                                    10,
-                                                    0,
-                                                    SlotActionType.QUICK_MOVE,
-                                                    mc2.player
-                                            );
+                            mc2.interactionManager.clickSlot(
+                                    mc2.player.currentScreenHandler.syncId,
+                                    10,
+                                    0,
+                                    SlotActionType.QUICK_MOVE,
+                                    mc2.player
+                            );
+                        });
+                    }
+                }, 600);
 
-                                        });
-                                    }
-                                },
-                                600
-                        );
+            }).dimensions(x, y, 100, 20).build();
 
-                    }).dimensions(x, y, 95, 20).build()
-            );
+
+            // addDrawableChild = protected !!!
+            // Bu yüzden mixin interface'i üzerinden ekliyoruz.
+            ((ScreenAccessor) screen).callAddDrawableChild(button);
 
         });
     }
