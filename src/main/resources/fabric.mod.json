@@ -1,23 +1,39 @@
 {
   "schemaVersion": 1,
   "id": "totemquick",
-  "version": "${version}",
+  "version": "1.0.0",
   "name": "TotemQuick",
-  "description": "Press V to quickly move a Totem of Undying to your offhand (swap if needed).",
-  "authors": [
-    "Yukile394"
-  ],
-  "contact": {},
-  "license": "MIT",
-  "environment": "*",
+  "description": "Tek tuşla totem ekip hızlı kullanım sağlayan Fabric mod. Minecraft 1.20.1",
+  "authors": ["Yukile394"],
+  
+  "contact": {
+    "homepage": "",
+    "sources": ""
+  },
+
+  "icon": "assets/totemquick/icon.png",
+  "license": "All-Rights-Reserved",
+
+  "environment": "client",
+
   "entrypoints": {
     "client": [
-      "com.yukile394.totemquick.TotemQuickClient"
+      "com.exloran.totemquick.TotemQuickServer"
     ]
   },
+
+  "mixins": [
+    "totemquick.mixins.json"
+  ],
+
   "depends": {
     "fabricloader": ">=0.14.0",
-    "fabric": "*",
-    "minecraft": "1.20.1"
+    "fabric-api": "*",
+    "minecraft": "1.20.1",
+    "java": ">=17"
+  },
+
+  "suggests": {
+    "modmenu": "*"
   }
 }
