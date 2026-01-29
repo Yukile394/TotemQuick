@@ -11,7 +11,7 @@ import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-public class TotemQuickServer implements ClientModInitializer {
+public class TotemQuickClient implements ClientModInitializer {
     private static KeyBinding totemKey;
 
     @Override
