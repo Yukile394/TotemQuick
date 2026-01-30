@@ -16,7 +16,7 @@ import org.lwjgl.glfw.GLFW;
 public class TotemManager {
 
     public static KeyBinding keyL;
-    private static long lastSoundTime = 0L; // Son ses zamanı
+    private static long lastSoundTime = 0L; // Bu satırı ekledik
 
     public static void init() {
         keyL = KeyBindingHelper.registerKeyBinding(
@@ -81,14 +81,12 @@ public class TotemManager {
 
             if (config.sesliUyari) {
                 long currentTime = System.currentTimeMillis();
-                if (currentTime - lastSoundTime >= 60_000L) { // 60.000 ms = 1 dakika
+                if (currentTime - lastSoundTime >= 60_000L) { // 1 dakika
                     lastSoundTime = currentTime;
-
-                    // Yeni uyarı sesi
                     client.player.playSound(
-                            SoundEvents.BLOCK_NOTE_BLOCK_BELL, // İstediğin sesle değiştirebilirsin
-                            1.0f, // volume
-                            1.0f  // pitch
+                            SoundEvents.BLOCK_NOTE_BLOCK_BELL, // Yeni ses
+                            1.0f,
+                            1.0f
                     );
                 }
             }
