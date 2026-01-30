@@ -81,8 +81,6 @@ public class TotemManager {
 
             if (config.sesliUyari) {
                 long currentTime = System.currentTimeMillis();
-                if (lastSoundTime == 0) lastSoundTime = currentTime;
-
                 if (currentTime - lastSoundTime >= 60_000L) { // 60.000 ms = 1 dakika
                     lastSoundTime = currentTime;
 
