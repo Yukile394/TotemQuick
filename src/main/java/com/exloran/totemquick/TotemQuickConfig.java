@@ -8,44 +8,40 @@ import net.minecraft.util.Formatting;
 @Config(name = "totemquick")
 public class TotemQuickConfig implements ConfigData {
 
-    @ConfigEntry.Gui.Tooltip()
+    @ConfigEntry.Gui.Tooltip
     public boolean enabled = true;
 
-    // --- SES AYARLARI ---
+    // Ses Ayarları Grubu
     @ConfigEntry.Gui.CollapsibleObject
     public SoundSettings sound = new SoundSettings();
 
+    // Görsel Ayarlar Grubu
+    @ConfigEntry.Gui.CollapsibleObject
+    public VisualSettings visual = new VisualSettings();
+
     public static class SoundSettings {
-        @ConfigEntry.Gui.Tooltip()
+        @ConfigEntry.Gui.Tooltip
         public boolean sesliUyari = true;
 
-        @ConfigEntry.Gui.Tooltip()
-        public String sesID = "minecraft:block.note_block.bell"; // 1.21 Ses ID'si
+        @ConfigEntry.Gui.Tooltip
+        public String sesID = "minecraft:block.note_block.bell";
 
         @ConfigEntry.BoundedControl(min = 0, max = 2)
-        public float pitch = 1.0f; // Ses inceliği/kalınlığı
-        
+        public float pitch = 1.0f;
+
         @ConfigEntry.BoundedControl(min = 0, max = 1)
         public float volume = 1.0f;
     }
 
-    // --- GÖRSEL AYARLAR ---
-    @ConfigEntry.Gui.CollapsibleObject
-    public VisualSettings visual = new VisualSettings();
-
     public static class VisualSettings {
-        @ConfigEntry.Gui.Tooltip()
+        @ConfigEntry.Gui.Tooltip
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.DROPDOWN)
         public Formatting uyarirengi = Formatting.RED;
 
         public boolean boldText = true;
-    }
-
-    /**
-     * Minecraft Formatting nesnesini doğrudan döndürür.
-     * Enum kullandığımız için parse hatası riski kalmadı.
-     */
-    public Formatting getSelectedColor() {
-        return visual.uyarirengi != null ? visual.uyarirengi : Formatting.RED;
+        
+        // Hex Renk Desteği (#FF0000 gibi)
+        @ConfigEntry.Gui.Tooltip
+        public String customHexColor = "#FF0000";
     }
 }
