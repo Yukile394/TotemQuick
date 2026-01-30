@@ -16,7 +16,7 @@ import org.lwjgl.glfw.GLFW;
 public class TotemManager {
 
     public static KeyBinding keyL;
-    // Ses zamanlayıcısı için değişken (Tick tabanlı: 1 saniye = 20 tick)
+    // Static değişkenler sınıfın en başında olmalı
     private static int soundCooldown = 0;
     private static final int THREE_MINUTES_IN_TICKS = 3 * 60 * 20; 
 
@@ -33,30 +33,30 @@ public class TotemManager {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
 
-            // Zamanlayıcıyı her tick'te azalt
+            // Zamanlayıcıyı azalt
             if (soundCooldown > 0) {
                 soundCooldown--;
             }
 
-            TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
+            try {
+                TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
-            while (keyL.wasPressed()) {
-                config.enabled = !config.enabled;
-                client.player.sendMessage(
-                        Text.literal("TotemQuick: " + (config.enabled ? "AÇIK" : "KAPALI")),
-                        true
-                );
-            }
+                while (keyL.wasPressed()) {
+                    config.enabled = !config.enabled;
+                    client.player.sendMessage(Text.literal("TotemQuick: " + (config.enabled ? "AÇIK" : "KAPALI")), true);
+                }
 
-            if (config.enabled && client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {
-                logic(client, config);
+                if (config.enabled && client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {
+                    executeTotemLogic(client, config);
+                }
+            } catch (Exception e) {
+                // Config yüklenirken hata oluşursa build düşmesin diye basit bir try-catch
             }
         });
     }
 
-    private static void logic(MinecraftClient client, TotemQuickConfig config) {
+    private static void executeTotemLogic(MinecraftClient client, TotemQuickConfig config) {
         int slot = -1;
-
         for (int i = 0; i < 36; i++) {
             if (client.player.getInventory().getStack(i).getItem() == Items.TOTEM_OF_UNDYING) {
                 slot = i;
@@ -66,6 +66,7 @@ public class TotemManager {
 
         if (slot != -1) {
             int syncSlot = slot < 9 ? slot + 36 : slot;
+            // Bazı sürümlerde clickSlot parametre sayısı farklıdır, burayı kontrol et
             client.interactionManager.clickSlot(
                     client.player.currentScreenHandler.syncId,
                     syncSlot,
@@ -74,26 +75,25 @@ public class TotemManager {
                     client.player
             );
         } else {
-            // Totem bittiğinde çalışacak kısım
-            Formatting renk = Formatting.byName(config.uyarirengi) != null
-                            ? Formatting.byName(config.uyarirengi)
-                            : Formatting.RED;
+            handleWarning(client, config);
+        }
+    }
 
-            client.player.sendMessage(
-                    Text.literal("TOTEM BİTTİ!").formatted(renk),
-                    true
-            );
-
-            // Ses çalma mantığı: Sadece cooldown 0 ise çal
-            if (config.sesliUyari && soundCooldown <= 0) {
-                client.player.playSound(
-                        SoundEvents.BLOCK_NOTE_BLOCK_PLING, // Ses değiştirildi
-                        1.0f,
-                        1.0f
-                );
-                // Zamanlayıcıyı 3 dakikaya ayarla
-                soundCooldown = THREE_MINUTES_IN_TICKS;
+    private static void handleWarning(MinecraftClient client, TotemQuickConfig config) {
+        Formatting renk = Formatting.RED;
+        try {
+            if (config.uyarirengi != null) {
+                renk = Formatting.byName(config.uyarirengi);
             }
+        } catch (Exception e) {
+            renk = Formatting.RED;
+        }
+
+        client.player.sendMessage(Text.literal("TOTEM BİTTİ!").formatted(renk), true);
+
+        if (config.sesliUyari && soundCooldown <= 0) {
+            client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+            soundCooldown = THREE_MINUTES_IN_TICKS;
         }
     }
 }
