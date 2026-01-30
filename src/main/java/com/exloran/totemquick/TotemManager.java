@@ -16,7 +16,6 @@ import org.lwjgl.glfw.GLFW;
 public class TotemManager {
 
     public static KeyBinding keyL;
-    private static long lastSoundTime = 0L; // Bu satırı ekledik
 
     public static void init() {
         keyL = KeyBindingHelper.registerKeyBinding(
@@ -34,6 +33,7 @@ public class TotemManager {
             TotemQuickConfig config =
                     AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
+            // Key ile aç/kapat
             while (keyL.wasPressed()) {
                 config.enabled = !config.enabled;
                 client.player.sendMessage(
@@ -42,6 +42,7 @@ public class TotemManager {
                 );
             }
 
+            // TotemQuick aktifse ve offhand'de totem yoksa
             if (config.enabled
                     && client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {
                 logic(client, config);
@@ -80,14 +81,13 @@ public class TotemManager {
             );
 
             if (config.sesliUyari) {
-                long currentTime = System.currentTimeMillis();
-                if (currentTime - lastSoundTime >= 60_000L) { // 1 dakika
-                    lastSoundTime = currentTime;
-                    client.player.playSound(
-                            SoundEvents.BLOCK_NOTE_BLOCK_BELL, // Yeni ses
-                            1.0f,
-                            1.0f
-                    );
+                switch (config.sesSecimi) {
+                    case "Pling" -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+                    case "Bell" -> client.player.playSound(SoundEvents.BLOCK_BELL_USE, 1.0f, 1.0f);
+                    case "Chime" -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 1.0f);
+                    case "XP" -> client.player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+                    case "LevelUp" -> client.player.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+                    default -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
                 }
             }
         }
