@@ -1,4 +1,4 @@
-package com.exloran.totemquick;
+Package com.exloran.totemquick;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -33,7 +33,6 @@ public class TotemManager {
             TotemQuickConfig config =
                     AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
-            // Key ile aç/kapat
             while (keyL.wasPressed()) {
                 config.enabled = !config.enabled;
                 client.player.sendMessage(
@@ -42,7 +41,6 @@ public class TotemManager {
                 );
             }
 
-            // TotemQuick aktifse ve offhand'de totem yoksa
             if (config.enabled
                     && client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {
                 logic(client, config);
@@ -81,14 +79,11 @@ public class TotemManager {
             );
 
             if (config.sesliUyari) {
-                switch (config.sesSecimi) {
-                    case "Pling" -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
-                    case "Bell" -> client.player.playSound(SoundEvents.BLOCK_BELL_USE, 1.0f, 1.0f);
-                    case "Chime" -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 1.0f);
-                    case "XP" -> client.player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-                    case "LevelUp" -> client.player.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    default -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
-                }
+                client.player.playSound(
+                        SoundEvents.BLOCK_ANVIL_LAND,
+                        1.0f,
+                        1.0f
+                );
             }
         }
     }
