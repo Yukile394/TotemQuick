@@ -2,6 +2,7 @@ package com.exloran.totemquick;
 
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
+import net.minecraft.util.Formatting;
 
 @Config(name = "totemquick")
 public class TotemQuickConfig implements ConfigData {
@@ -15,29 +16,31 @@ public class TotemQuickConfig implements ConfigData {
     // Totem yok uyarı rengi (isim veya RGB Hex: #RRGGBB)
     public String uyarirengi = "red";  
 
-    // Yeni: Totem takıldığında ses efekti olsun mu
+    // Totem takıldığında ses efekti olsun mu
     public boolean totemSes = true;
 
-    // Yeni: Totem takıldığında mesaj gösterilsin mi
+    // Totem takıldığında mesaj gösterilsin mi
     public boolean totemMesaj = true;
 
-    // Yeni: Mesaj ön ek simgesi (opsiyonel, örn: ⚡, ✨, 🛡️)
+    // Mesaj ön ek simgesi (opsiyonel)
     public String mesajSimge = "✨";
 
     /**
-     * Bu fonksiyon renk string'ini Minecraft Formatting veya RGB değerine çevirir.
-     * Örnek kullanım:
-     *   String renk = config.uyarirengi;
-     *   Formatting renkFormat = TotemQuickConfig.parseColor(renk);
+     * Renk çevirici (isim veya RGB Hex) - safe
      */
     public static Formatting parseColor(String color) {
         if (color == null || color.isEmpty()) return Formatting.RED;
 
-        // Eğer #RRGGBB şeklindeyse: RGB ile uyumlu TextColor oluştur (Minecraft 1.19+)
+        // Hex RGB desteği (1.21'de ofRgb yoksa safe fallback)
         if (color.startsWith("#") && color.length() == 7) {
             try {
                 int rgb = Integer.parseInt(color.substring(1), 16);
-                return Formatting.ofRgb(rgb);  // 1.21+ ile uyumlu
+                // Eğer ofRgb çalışmazsa RED fallback
+                try {
+                    return Formatting.ofRgb(rgb);
+                } catch (NoSuchMethodError e) {
+                    return Formatting.RED;
+                }
             } catch (NumberFormatException e) {
                 return Formatting.RED;
             }
