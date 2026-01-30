@@ -9,6 +9,7 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
@@ -35,12 +36,15 @@ public class TotemManager {
             while (keyL.wasPressed()) {  
                 config.enabled = !config.enabled;  
                 client.player.sendMessage(  
-                    Text.literal("TotemQuick: " + (config.enabled ? "AÇIK" : "KAPALI")),  
+                    Text.literal("✨ TotemQuick: " + (config.enabled ? "AÇIK" : "KAPALI")),  
                     true  
                 );  
+                if (config.sesliUyari) {
+                    client.player.playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                }
             }  
 
-            if (config.enabled && client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {  
+            if (config.enabled && !client.player.getOffHandStack().isOf(Items.TOTEM_OF_UNDYING)) {  
                 logic(client, config);  
             }  
         });  
@@ -65,18 +69,22 @@ public class TotemManager {
                 SlotActionType.SWAP,  
                 client.player  
             );  
+            // Totem takıldığında rahatlatıcı ses
+            if (config.sesliUyari) {
+                client.player.playSound(SoundEvents.BLOCK_BELL_USE, 1.0f, 1.2f);
+            }
         } else {  
             Formatting renk = Formatting.byName(config.uyarirengi.toUpperCase()) != null  
                 ? Formatting.byName(config.uyarirengi.toUpperCase())  
                 : Formatting.RED;  
 
             client.player.sendMessage(  
-                Text.literal("TOTEM BİTTİ!").formatted(renk),  
+                Text.literal("⚠️ TOTEM BİTTİ!").formatted(renk),  
                 true  
             );  
 
             if (config.sesliUyari) {  
-                client.player.playSound(SoundEvents.BLOCK_ANVIL_LAND, 1.0f, 1.0f);  
+                client.player.playSound(SoundEvents.BLOCK_BELL_RESONATE, 1.0f, 0.8f);  
             }  
         }  
     }
