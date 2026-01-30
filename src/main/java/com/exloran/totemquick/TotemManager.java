@@ -1,8 +1,8 @@
 package com.exloran.totemquick;
 
+import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.Items;
@@ -13,67 +13,41 @@ import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
 
 public class TotemManager {
-    public static KeyBinding toggleKey;
-    public static boolean isEnabled = true;
-    private static int alertCooldown = 0;
-
-    // Config simülasyonu (Gerçek config dosyasından da okunabilir)
-    public static Formatting warningColor = Formatting.RED; 
+    public static KeyBinding keyL;
 
     public static void init() {
-        toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "TotemQuick: Aç/Kapat",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_L,
-                "TotemQuick"
-        ));
+        keyL = KeyBindingHelper.registerKeyBinding(new KeyBinding("TotemQuick Ac/Kapat", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_L, "TotemQuick"));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
+            Config config = AutoConfig.getConfigHolder(Config.class).getConfig();
 
-            while (toggleKey.wasPressed()) {
-                isEnabled = !isEnabled;
-                Formatting statusColor = isEnabled ? Formatting.GREEN : Formatting.RED;
-                client.player.sendMessage(Text.literal("TotemQuick: " + (isEnabled ? "AKTİF" : "KAPALI"))
-                        .formatted(statusColor), true);
+            while (keyL.wasPressed()) {
+                config.enabled = !config.enabled;
+                client.player.sendMessage(Text.of("TotemQuick: " + (config.enabled ? "ACIK" : "KAPALI")), true);
             }
 
-            if (isEnabled) {
-                runAutoTotem(client);
+            if (config.enabled && client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {
+                logic(client, config);
             }
         });
     }
 
-    private static void runAutoTotem(MinecraftClient client) {
-        var player = client.player;
-        if (player.getOffHandStack().getItem() == Items.TOTEM_OF_UNDYING) return;
-
-        int totemSlot = -1;
-        // Envanteri tara
+    private static void logic(net.minecraft.client.MinecraftClient client, Config config) {
+        int slot = -1;
         for (int i = 0; i < 36; i++) {
-            if (player.getInventory().getStack(i).getItem() == Items.TOTEM_OF_UNDYING) {
-                totemSlot = i;
-                break;
+            if (client.player.getInventory().getStack(i).getItem() == Items.TOTEM_OF_UNDYING) {
+                slot = i; break;
             }
         }
 
-        if (totemSlot != -1) {
-            // Totemi bulduk, otomatik olarak sol ele çek (Multiplayer uyumlu paket gönderimi)
-            int syncSlot = totemSlot < 9 ? totemSlot + 36 : totemSlot;
-            client.interactionManager.clickSlot(player.currentScreenHandler.syncId, syncSlot, 40, SlotActionType.SWAP, player);
+        if (slot != -1) {
+            int syncSlot = slot < 9 ? slot + 36 : slot;
+            client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId, syncSlot, 40, SlotActionType.SWAP, client.player);
         } else {
-            // Totem bittiyse uyarı ver
-            if (alertCooldown <= 0) {
-                // Burada config'den gelen rengi (warningColor) kullanıyoruz
-                player.sendMessage(Text.literal("⚠ ENVANTERDE TOTEM KALMADI!")
-                        .formatted(Formatting.BOLD, warningColor), false);
-                
-                // Ses efekti (Daha fazla özellik)
-                player.playSound(SoundEvents.BLOCK_ANVIL_LAND, 0.5F, 1.0F);
-                alertCooldown = 80; // 4 saniye bekle
-            } else {
-                alertCooldown--;
-            }
+            Formatting renk = Formatting.byName(config.uyarirengi) != null ? Formatting.byName(config.uyarirengi) : Formatting.RED;
+            client.player.sendMessage(Text.literal("TOTEM BITTI!").formatted(renk), true);
+            if (config.sesliUyari) client.player.playSound(SoundEvents.BLOCK_ANVIL_LAND, 1.0f, 1.0f);
         }
     }
 }
