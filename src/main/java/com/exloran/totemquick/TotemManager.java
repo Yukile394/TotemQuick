@@ -24,7 +24,7 @@ public class TotemManager {
             new KeyBinding(
                 "TotemQuick Aç/Kapat",
                 InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_L,
+                GLFW.GLFW_KEY_T,
                 "TotemQuick"
             )
         );
@@ -87,7 +87,7 @@ public class TotemManager {
                 : Formatting.RED;
 
             client.player.sendMessage(
-                Text.literal("⚠️ TOTEM BİTTİ!").formatted(renk),
+                Text.literal("TOTEM BİTTİ!").formatted(renk),
                 true
             );
 
