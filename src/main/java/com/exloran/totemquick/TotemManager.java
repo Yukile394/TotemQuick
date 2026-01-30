@@ -1,4 +1,4 @@
-Package com.exloran.totemquick;
+package com.exloran.totemquick;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -9,7 +9,6 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
@@ -17,7 +16,7 @@ import org.lwjgl.glfw.GLFW;
 public class TotemManager {
 
     public static KeyBinding keyL;
-    private static long lastSoundTime = 0; // son ses zamanı
+    private static long lastSoundTime = 0L; // Son ses zamanı
 
     public static void init() {
         keyL = KeyBindingHelper.registerKeyBinding(
@@ -82,14 +81,14 @@ public class TotemManager {
 
             if (config.sesliUyari) {
                 long currentTime = System.currentTimeMillis();
-                // 3 dakika geçtiyse ses çal
-                if (currentTime - lastSoundTime >= 180_000) { // 180.000 ms = 3 dakika
+                if (lastSoundTime == 0) lastSoundTime = currentTime;
+
+                if (currentTime - lastSoundTime >= 60_000L) { // 60.000 ms = 1 dakika
                     lastSoundTime = currentTime;
 
-                    // İstediğin farklı ses buraya
-                    SoundEvent newSound = SoundEvents.BLOCK_NOTE_BLOCK_BELL; // örnek: zil sesi
+                    // Yeni uyarı sesi
                     client.player.playSound(
-                            newSound,
+                            SoundEvents.BLOCK_NOTE_BLOCK_BELL, // İstediğin sesle değiştirebilirsin
                             1.0f, // volume
                             1.0f  // pitch
                     );
