@@ -1,39 +1,27 @@
 {
-  "schemaVersion": 1,
-  "id": "totemquick",
-  "version": "1.0.0",
-  "name": "TotemQuick",
-  "description": "Tek tuşla totem ekip hızlı kullanım sağlayan Fabric mod. Minecraft 1.20.1",
-  "authors": ["Yukile394"],
-  
-  "contact": {
-    "homepage": "",
-    "sources": ""
-  },
-
-  "icon": "assets/totemquick/icon.png",
-  "license": "All-Rights-Reserved",
-
-  "environment": "client",
-
-  "entrypoints": {
-    "client": [
-      "com.exloran.totemquick.TotemQuickManager"
-    ]
-  },
-
-  "mixins": [
-    "totemquick.mixins.json"
-  ],
-
-  "depends": {
-    "fabricloader": ">=0.14.0",
-    "fabric-api": "*",
-    "minecraft": "1.20.1",
-    "java": ">=17"
-  },
-
-  "suggests": {
-    "modmenu": "*"
-  }
+	"schemaVersion": 1,
+	"id": "totemquick",
+	"version": "${version}",
+	"name": "TotemQuick",
+	"description": "Otomatik totem ve gelişmiş uyarı sistemi.",
+	"authors": ["Exloran"],
+	"license": "Apache-2.0",
+	"environment": "client",
+	"entrypoints": {
+		"main": [
+			"com.exloran.totemquick.Main"
+		],
+		"modmenu": [
+			"com.exloran.totemquick.ModMenu"
+		]
+	},
+	"mixins": [
+		"totemquick.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.14.9",
+		"minecraft": "~1.20.1",
+		"cloth-config2": "*",
+		"modmenu": "*"
+	}
 }
