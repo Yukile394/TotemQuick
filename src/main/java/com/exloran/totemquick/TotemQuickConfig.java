@@ -1,12 +1,11 @@
 package com.exloran.totemquick;
 
 import me.shedaniel.autoconfig.ConfigData;
-import me.shedaniel.autoconfig.annotation.Config; // Notasyon olan
+import me.shedaniel.autoconfig.annotation.Config;
 
 @Config(name = "totemquick")
-public class Config implements ConfigData {
+public class TotemQuickConfig implements ConfigData {
+
     public boolean enabled = true;
-    public boolean sesliUyari = true;
-    public String uyarirengi = "RED";
-    public int delayTicks = 0;
+
 }
