@@ -8,29 +8,48 @@ import net.minecraft.util.Formatting;
 @Config(name = "totemquick")
 public class TotemQuickConfig implements ConfigData {
 
-    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.Gui.Tooltip()
     public boolean enabled = true;
 
     // --- SES AYARLARI ---
-    @ConfigEntry.Gui.Tooltip
-    public boolean sesliUyari = true;
+    @ConfigEntry.Gui.CollapsibleObject
+    public SoundSettings sound = new SoundSettings();
 
-    @ConfigEntry.Gui.Tooltip
-    public String sesID = "minecraft:block.note_block.bell";
+    public static class SoundSettings {
+        public boolean sesliUyari = true;
 
-    @ConfigEntry.BoundedControl(min = 0, max = 2)
-    public float soundPitch = 1.0f;
+        @ConfigEntry.Gui.Tooltip()
+        public String sesID = "minecraft:block.note_block.bell"; // 1.21 yeni sesleri buraya yazılabilir
 
-    @ConfigEntry.BoundedControl(min = 0, max = 1)
-    public float soundVolume = 1.0f;
+        @ConfigEntry.BoundedControl(min = 0, max = 2)
+        public float pitch = 1.0f;
+
+        @ConfigEntry.BoundedControl(min = 0, max = 1)
+        public float volume = 1.0f;
+    }
 
     // --- GÖRSEL AYARLAR ---
-    @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.DROPDOWN)
-    public Formatting uyarirengi = Formatting.RED;
+    @ConfigEntry.Gui.CollapsibleObject
+    public VisualSettings visual = new VisualSettings();
 
-    @ConfigEntry.Gui.Tooltip
-    public String customHexColor = "#FF0000";
+    public static class VisualSettings {
+        @ConfigEntry.Gui.Tooltip()
+        public String uyarirengi = "red";
 
-    public boolean boldText = true;
+        @ConfigEntry.Gui.Tooltip()
+        public String customHexColor = "#FF0000"; // Özel # hex kodu desteği
+
+        public boolean boldText = true;
+    }
+
+    /**
+     * Geliştirilmiş renk parse fonksiyonu.
+     * Hem kelime (red, gold) hem de gerekirse Formatting enum desteği sağlar.
+     */
+    public static Formatting parseColor(String color) {
+        if (color == null || color.isEmpty()) return Formatting.RED;
+        
+        Formatting f = Formatting.byName(color.toUpperCase());
+        return f != null ? f : Formatting.RED;
+    }
 }
