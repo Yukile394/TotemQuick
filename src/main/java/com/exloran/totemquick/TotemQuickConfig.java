@@ -12,6 +12,9 @@ public class TotemQuickConfig implements ConfigData {
     // Totem yoksa sesli uyarı
     public boolean sesliUyari = true;
 
-    // Totem yok uyarı rengi (red, yellow, green, gold, vs.)
-    public String uyarirengi = "red";
+    // Totem yok uyarı rengi (RED, YELLOW, GREEN, GOLD, vb.)
+    public String uyarirengi = "RED";
+
+    // Rahatlatıcı ses seçimi: Pling, Bell, Chime, XP, LevelUp
+    public String sesSecimi = "Pling";
 }
