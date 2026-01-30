@@ -24,3 +24,9 @@ jobs:
         env:
           GRADLE_OPTS: -Xmx2G
         run: ./gradlew clean build --no-build-cache
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: TotemQuick-JAR
+          path: build/libs/*.jar
