@@ -16,76 +16,85 @@ import org.lwjgl.glfw.GLFW;
 
 public class TotemManager {
 
-    public static KeyBinding keyL;  
+    public static KeyBinding keyL;
 
-    public static void init() {  
-        keyL = KeyBindingHelper.registerKeyBinding(  
-            new KeyBinding(  
-                "TotemQuick Aç/Kapat",  
-                InputUtil.Type.KEYSYM,  
-                GLFW.GLFW_KEY_L,  
-                "TotemQuick"  
-            )  
-        );  
+    public static void init() {
+        // KeyBinding kaydı
+        keyL = KeyBindingHelper.registerKeyBinding(
+            new KeyBinding(
+                "TotemQuick Aç/Kapat",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_L,
+                "TotemQuick"
+            )
+        );
 
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {  
-            if (client.player == null) return;  
+        // Her client tick sonunda çalışacak event
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null) return;
 
-            TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();  
+            TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
-            while (keyL.wasPressed()) {  
-                config.enabled = !config.enabled;  
-                client.player.sendMessage(  
-                    Text.literal("✨ TotemQuick: " + (config.enabled ? "AÇIK" : "KAPALI")),  
-                    true  
-                );  
+            // Key basıldığında modu aç/kapat
+            while (keyL.wasPressed()) {
+                config.enabled = !config.enabled;
+                client.player.sendMessage(
+                    Text.literal("✨ TotemQuick: " + (config.enabled ? "AÇIK" : "KAPALI")),
+                    true
+                );
                 if (config.sesliUyari) {
                     client.player.playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
                 }
-            }  
+            }
 
-            if (config.enabled && !client.player.getOffHandStack().isOf(Items.TOTEM_OF_UNDYING)) {  
-                logic(client, config);  
-            }  
-        });  
-    }  
+            // Mod açık ve offhand totem yoksa logic çalıştır
+            if (config.enabled && !client.player.getOffHandStack().isOf(Items.TOTEM_OF_UNDYING)) {
+                logic(client, config);
+            }
+        });
+    }
 
-    private static void logic(MinecraftClient client, TotemQuickConfig config) {  
-        int slot = -1;  
+    private static void logic(MinecraftClient client, TotemQuickConfig config) {
+        int slot = -1;
 
-        for (int i = 0; i < client.player.getInventory().main.size(); i++) {  
-            if (client.player.getInventory().getStack(i).getItem() == Items.TOTEM_OF_UNDYING) {  
-                slot = i;  
-                break;  
-            }  
-        }  
+        // Envanteri tarayarak totem bul
+        for (int i = 0; i < client.player.getInventory().main.size(); i++) {
+            if (client.player.getInventory().getStack(i).getItem() == Items.TOTEM_OF_UNDYING) {
+                slot = i;
+                break;
+            }
+        }
 
-        if (slot != -1) {  
-            int syncSlot = slot < 9 ? slot + 36 : slot;  
-            client.interactionManager.clickSlot(  
-                client.player.currentScreenHandler.syncId,  
-                syncSlot,  
-                40,  
-                SlotActionType.SWAP,  
-                client.player  
-            );  
-            // Totem takıldığında rahatlatıcı ses
+        if (slot != -1) {
+            int syncSlot = slot < 9 ? slot + 36 : slot;
+
+            client.interactionManager.clickSlot(
+                client.player.currentScreenHandler.syncId,
+                syncSlot,
+                40,
+                SlotActionType.SWAP,
+                client.player
+            );
+
+            // Totem takıldığında ses
             if (config.sesliUyari) {
                 client.player.playSound(SoundEvents.BLOCK_BELL_USE, 1.0f, 1.2f);
             }
-        } else {  
-            Formatting renk = Formatting.byName(config.uyarirengi.toUpperCase()) != null  
-                ? Formatting.byName(config.uyarirengi.toUpperCase())  
-                : Formatting.RED;  
+        } else {
+            // Uyarı rengi güvenli şekilde al
+            Formatting renk = Formatting.byName(config.uyarirengi.toUpperCase()) != null
+                ? Formatting.byName(config.uyarirengi.toUpperCase())
+                : Formatting.RED;
 
-            client.player.sendMessage(  
-                Text.literal("⚠️ TOTEM BİTTİ!").formatted(renk),  
-                true  
-            );  
+            client.player.sendMessage(
+                Text.literal("⚠️ TOTEM BİTTİ!").formatted(renk),
+                true
+            );
 
-            if (config.sesliUyari) {  
-                client.player.playSound(SoundEvents.BLOCK_BELL_RESONATE, 1.0f, 0.8f);  
-            }  
-        }  
+            // Totem bittiğinde ses
+            if (config.sesliUyari) {
+                client.player.playSound(SoundEvents.BLOCK_BELL_RESONATE, 1.0f, 0.8f);
+            }
+        }
     }
 }
