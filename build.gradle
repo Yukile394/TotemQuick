@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.7.1' // Gradle 8.7 ile uyumlu sürüme çekildi
+    id 'fabric-loom' version '1.6.14' // Gradle 8.7 ile uyumlu olan son kararlı sürüm
     id 'maven-publish'
 }
 
@@ -21,11 +21,11 @@ dependencies {
     // 1.21 Temel Bileşenler
     minecraft "com.mojang:minecraft:1.21"
     mappings "net.fabricmc:yarn:1.21+build.2:v2"
-    modImplementation "net.fabricmc:fabric-loader:0.15.11" // 1.21 için stabil loader
+    modImplementation "net.fabricmc:fabric-loader:0.15.11"
     modImplementation "net.fabricmc.fabric-api:fabric-api:0.100.0+1.21"
 
-    // Mod Menu & Cloth Config (Pojav için içine gömüldü)
-    modApi "com.terraformersmc:modmenu:11.0.0-beta.1"
+    // Mod Menu & Cloth Config
+    modApi "com.terraformersmc:modmenu:11.0.1"
     modApi("me.shedaniel.cloth:cloth-config-fabric:15.0.127") {
         exclude(group: "net.fabricmc.fabric-api")
     }
@@ -52,5 +52,3 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
 }
-
-// ... geri kalan publishing kısımları aynı
