@@ -9,7 +9,7 @@
   "environment": "client",
 
   "entrypoints": {
-    "main": [
+    "client": [
       "com.exloran.totemquick.Main"
     ],
     "modmenu": [
@@ -26,6 +26,7 @@
     "minecraft": "1.21.x",
     "fabric-api": "*",
     "cloth-config2": "*",
-    "modmenu": "*"
+    "modmenu": "*",
+    "java": ">=17"
   }
 }
