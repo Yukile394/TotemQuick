@@ -1,27 +1,31 @@
 {
-	"schemaVersion": 1,
-	"id": "totemquick",
-	"version": "${version}",
-	"name": "TotemQuick",
-	"description": "Otomatik totem ve gelişmiş uyarı sistemi.",
-	"authors": ["Exloran"],
-	"license": "Apache-2.0",
-	"environment": "client",
-	"entrypoints": {
-		"main": [
-			"com.exloran.totemquick.Main"
-		],
-		"modmenu": [
-			"com.exloran.totemquick.ModMenu"
-		]
-	},
-	"mixins": [
-		"totemquick.mixins.json"
-	],
-	"depends": {
-		"fabricloader": ">=0.14.9",
-		"minecraft": "~1.20.1",
-		"cloth-config2": "*",
-		"modmenu": "*"
-	}
+  "schemaVersion": 1,
+  "id": "totemquick",
+  "version": "${version}",
+  "name": "TotemQuick",
+  "description": "Otomatik totem ve gelişmiş uyarı sistemi.",
+  "authors": ["Yukile"],
+  "license": "Apache-2.0",
+  "environment": "client",
+
+  "entrypoints": {
+    "main": [
+      "com.exloran.totemquick.Main"
+    ],
+    "modmenu": [
+      "com.exloran.totemquick.ModMenu"
+    ]
+  },
+
+  "mixins": [
+    "totemquick.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "1.21.x",
+    "fabric-api": "*",
+    "cloth-config2": "*",
+    "modmenu": "*"
+  }
 }
