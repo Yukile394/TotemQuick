@@ -2,29 +2,36 @@ name: Build
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Kodları çek
       - uses: actions/checkout@v4
 
+      # 2. Java 17 kur
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: temurin
 
+      # 3. Gradle çalıştırma izinleri ver
       - name: Grant execute permission
         run: chmod +x ./gradlew
 
+      # 4. Modu derle
       - name: Build
         env:
           GRADLE_OPTS: -Xmx2G
         run: ./gradlew clean build --no-build-cache
 
+      # 5. Oluşan JAR dosyasını yükle
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
