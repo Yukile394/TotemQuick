@@ -16,6 +16,9 @@ import org.lwjgl.glfw.GLFW;
 public class TotemManager {
 
     public static KeyBinding keyL;
+    // Ses zamanlayıcısı için değişken (Tick tabanlı: 1 saniye = 20 tick)
+    private static int soundCooldown = 0;
+    private static final int THREE_MINUTES_IN_TICKS = 3 * 60 * 20; 
 
     public static void init() {
         keyL = KeyBindingHelper.registerKeyBinding(
@@ -30,8 +33,12 @@ public class TotemManager {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
 
-            TotemQuickConfig config =
-                    AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
+            // Zamanlayıcıyı her tick'te azalt
+            if (soundCooldown > 0) {
+                soundCooldown--;
+            }
+
+            TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
             while (keyL.wasPressed()) {
                 config.enabled = !config.enabled;
@@ -41,8 +48,7 @@ public class TotemManager {
                 );
             }
 
-            if (config.enabled
-                    && client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {
+            if (config.enabled && client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {
                 logic(client, config);
             }
         });
@@ -68,8 +74,8 @@ public class TotemManager {
                     client.player
             );
         } else {
-            Formatting renk =
-                    Formatting.byName(config.uyarirengi) != null
+            // Totem bittiğinde çalışacak kısım
+            Formatting renk = Formatting.byName(config.uyarirengi) != null
                             ? Formatting.byName(config.uyarirengi)
                             : Formatting.RED;
 
@@ -78,12 +84,15 @@ public class TotemManager {
                     true
             );
 
-            if (config.sesliUyari) {
+            // Ses çalma mantığı: Sadece cooldown 0 ise çal
+            if (config.sesliUyari && soundCooldown <= 0) {
                 client.player.playSound(
-                        SoundEvents.BLOCK_ANVIL_LAND,
+                        SoundEvents.BLOCK_NOTE_BLOCK_PLING, // Ses değiştirildi
                         1.0f,
                         1.0f
                 );
+                // Zamanlayıcıyı 3 dakikaya ayarla
+                soundCooldown = THREE_MINUTES_IN_TICKS;
             }
         }
     }
