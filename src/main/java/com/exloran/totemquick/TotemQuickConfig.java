@@ -2,52 +2,29 @@ package com.exloran.totemquick;
 
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
-import net.minecraft.util.Formatting;
 
 @Config(name = "totemquick")
 public class TotemQuickConfig implements ConfigData {
 
     // Mod açık / kapalı
-    public boolean enabled = true;  
+    public boolean enabled = true;
 
     // Totem yoksa sesli uyarı
-    public boolean sesliUyari = true;  
+    public boolean sesliUyari = true;
 
-    // Totem yok uyarı rengi (isim veya RGB Hex: #RRGGBB)
-    public String uyarirengi = "red";  
-
-    // Totem takıldığında ses efekti olsun mu
-    public boolean totemSes = true;
-
-    // Totem takıldığında mesaj gösterilsin mi
-    public boolean totemMesaj = true;
-
-    // Mesaj ön ek simgesi (opsiyonel)
-    public String mesajSimge = "✨";
+    // Totem yok uyarı rengi (red, yellow, green, gold, vs.)
+    public String uyarirengi = "red";
 
     /**
-     * Renk çevirici (isim veya RGB Hex) - safe
+     * Güvenli renk parse fonksiyonu
+     * String olarak verilen rengi Minecraft Formatting objesine çevirir
+     * Eğer renk hatalıysa varsayılan RED döner
      */
-    public static Formatting parseColor(String color) {
-        if (color == null || color.isEmpty()) return Formatting.RED;
+    public static net.minecraft.util.Formatting parseColor(String color) {
+        if (color == null || color.isEmpty()) return net.minecraft.util.Formatting.RED;
 
-        // Hex RGB desteği (1.21'de ofRgb yoksa safe fallback)
-        if (color.startsWith("#") && color.length() == 7) {
-            try {
-                int rgb = Integer.parseInt(color.substring(1), 16);
-                // Eğer ofRgb çalışmazsa RED fallback
-                try {
-                    return Formatting.ofRgb(rgb);
-                } catch (NoSuchMethodError e) {
-                    return Formatting.RED;
-                }
-            } catch (NumberFormatException e) {
-                return Formatting.RED;
-            }
-        }
-
-        // İsme göre
-        Formatting f = Formatting.byName(color.toUpperCase());
-        return f != null ? f : Formatting.RED;
+        // İsimle eşleşme
+        net.minecraft.util.Formatting f = net.minecraft.util.Formatting.byName(color.toUpperCase());
+        return f != null ? f : net.minecraft.util.Formatting.RED;
     }
 }
