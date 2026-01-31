@@ -3,29 +3,26 @@ package com.exloran.totemquick;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import org.lwjgl.glfw.GLFW;
-
-/* HITBOX RENDER IMPORTLARI */
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import org.lwjgl.glfw.GLFW;
 
 public class TotemManager {
 
     public static KeyBinding keyL;
 
-    /* Uyarı spam koruması */
     private static int warnCooldown = 0;
 
     public static void init() {
@@ -47,7 +44,7 @@ public class TotemManager {
             TotemQuickConfig config =
                 AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
-            /* Key basıldığında aç / kapat */
+            /* Aç / Kapat */
             while (keyL.wasPressed()) {
                 config.enabled = !config.enabled;
 
@@ -59,7 +56,7 @@ public class TotemManager {
 
                 if (config.sesliUyari) {
                     client.player.playSound(
-                        SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
+                        SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP.value(),
                         1.0f,
                         1.0f
                     );
@@ -68,14 +65,13 @@ public class TotemManager {
 
             if (warnCooldown > 0) warnCooldown--;
 
-            /* Mod açık + offhand boş */
             if (config.enabled &&
                 !client.player.getOffHandStack().isOf(Items.TOTEM_OF_UNDYING)) {
                 logic(client, config);
             }
         });
 
-        /* FAKE HITBOX RENDER */
+        /* FAKE HITBOX RENDER (SADECE GÖRSEL) */
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client.player == null) return;
@@ -85,7 +81,6 @@ public class TotemManager {
 
             if (!config.enabled) return;
 
-            /* Hitbox rengi config’ten */
             float[] rgb = TotemQuickConfig.parseHitboxColor(config.hitboxRengi);
 
             Vec3d cam = context.camera().getPos();
@@ -98,8 +93,8 @@ public class TotemManager {
                 context.matrixStack(),
                 vc,
                 box,
-                rgb[0], rgb[1], rgb[2], // renk
-                1.0f                    // alpha
+                rgb[0], rgb[1], rgb[2],
+                1.0f
             );
         });
     }
@@ -107,7 +102,7 @@ public class TotemManager {
     private static void logic(MinecraftClient client, TotemQuickConfig config) {
         int slot = -1;
 
-        /* Envanter taraması */
+        /* Envanterde totem ara */
         for (int i = 0; i < client.player.getInventory().main.size(); i++) {
             if (client.player.getInventory().getStack(i).isOf(Items.TOTEM_OF_UNDYING)) {
                 slot = i;
@@ -115,7 +110,7 @@ public class TotemManager {
             }
         }
 
-        /* Totem bulunduysa offhand’e al */
+        /* Totem bulunduysa offhand */
         if (slot != -1) {
             int syncSlot = slot < 9 ? slot + 36 : slot;
 
@@ -129,16 +124,16 @@ public class TotemManager {
 
             if (config.sesliUyari) {
                 client.player.playSound(
-                    SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
+                    SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP.value(),
                     0.8f,
                     1.1f
                 );
             }
         }
-        /* Totem yoksa */
+        /* Totem yok */
         else {
             if (warnCooldown > 0) return;
-            warnCooldown = 40; // 2 saniye
+            warnCooldown = 40;
 
             Formatting renk = TotemQuickConfig.parseColor(config.uyarirengi);
 
@@ -149,7 +144,7 @@ public class TotemManager {
 
             if (config.sesliUyari) {
                 client.player.playSound(
-                    SoundEvents.BLOCK_NOTE_BLOCK_PLING,
+                    SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(),
                     0.9f,
                     0.6f
                 );
