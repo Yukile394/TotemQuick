@@ -1,0 +1,11 @@
+{
+  "text.autoconfig.totemquick.title": "TotemQuick Ayarları",
+
+  "text.autoconfig.totemquick.option.enabled": "Mod Aktif",
+  "text.autoconfig.totemquick.option.sesliUyari": "Sesli Uyarı",
+  "text.autoconfig.totemquick.option.uyarirengi": "Uyarı Rengi",
+
+  "text.autoconfig.totemquick.option.enabled.@Tooltip": "TotemQuick modunu açar veya kapatır",
+  "text.autoconfig.totemquick.option.sesliUyari.@Tooltip": "Totem bittiğinde veya takıldığında ses çalar",
+  "text.autoconfig.totemquick.option.uyarirengi.@Tooltip": "Totem bittiğinde gösterilecek yazının rengi (örnek: red, yellow, purple)"
+}
