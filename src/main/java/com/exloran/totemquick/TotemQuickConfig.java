@@ -18,16 +18,15 @@ public class TotemQuickConfig implements ConfigData {
     // Totem yok uyarı rengi (red, yellow, green, gold, vs.)
     public String uyarirengi = "red";
 
-    // Seçili uyarı sesi (aşağıdaki listeden biri)
-    public String uyariSesi = "ENTITY_EXPERIENCE_ORB_PICKUP";
+    // Fake hitbox rengi (red, blue, green, yellow, white, gray)
+    public String hitboxRengi = "green";
 
     /* ---------------------------------------------------------------- */
-    /* RENK PARSE */
+    /* RENK PARSE (CHAT) */
     /* ---------------------------------------------------------------- */
 
     /**
-     * String olarak verilen rengi Minecraft Formatting objesine çevirir
-     * Hatalıysa varsayılan RED döner
+     * Chat uyarı rengi
      */
     public static Formatting parseColor(String color) {
         if (color == null || color.isBlank()) {
@@ -39,63 +38,41 @@ public class TotemQuickConfig implements ConfigData {
     }
 
     /* ---------------------------------------------------------------- */
-    /* SES PARSE */
+    /* HITBOX RENK PARSE (RGB) */
     /* ---------------------------------------------------------------- */
 
     /**
-     * Config'te yazan sesi güvenli şekilde SoundEvent'e çevirir
-     * Hatalıysa varsayılan XP sesi döner
+     * Fake hitbox rengi (RGB)
+     * SADECE görsel amaçlıdır
      */
-    public static SoundEvent parseSound(String soundName) {
-        if (soundName == null || soundName.isBlank()) {
-            return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
+    public static float[] parseHitboxColor(String color) {
+        if (color == null) {
+            return new float[]{0.0f, 1.0f, 0.0f}; // default yeşil
         }
 
-        return switch (soundName.toUpperCase()) {
-
-            // 1️⃣ XP orb alma – hafif uyarı
-            case "ENTITY_EXPERIENCE_ORB_PICKUP" ->
-                    SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
-
-            // 2️⃣ Totem kullanma sesi – mantıklı ve güçlü
-            case "ITEM_TOTEM_USE" ->
-                    SoundEvents.ITEM_TOTEM_USE;
-
-            // 3️⃣ Anvil düşme – sert uyarı
-            case "BLOCK_ANVIL_LAND" ->
-                    SoundEvents.BLOCK_ANVIL_LAND;
-
-            // 4️⃣ Beacon aktif – dikkat çekici
-            case "BLOCK_BEACON_ACTIVATE" ->
-                    SoundEvents.BLOCK_BEACON_ACTIVATE;
-
-            // 5️⃣ Enderman uyarı sesi – tehlike hissi
-            case "ENTITY_ENDERMAN_STARE" ->
-                    SoundEvents.ENTITY_ENDERMAN_STARE;
-
-            // 6️⃣ Guardian uyarı – yüksek alarm
-            case "ENTITY_GUARDIAN_ATTACK" ->
-                    SoundEvents.ENTITY_GUARDIAN_ATTACK;
-
-            // 7️⃣ Wither spawn – aşırı tehlike
-            case "ENTITY_WITHER_SPAWN" ->
-                    SoundEvents.ENTITY_WITHER_SPAWN;
-
-            // 8️⃣ Bell çalma – net bildirim
-            case "BLOCK_BELL_USE" ->
-                    SoundEvents.BLOCK_BELL_USE;
-
-            // 9️⃣ Iron Golem hasar – sert uyarı
-            case "ENTITY_IRON_GOLEM_HURT" ->
-                    SoundEvents.ENTITY_IRON_GOLEM_HURT;
-
-            // 🔟 Dragon growl – maksimum alarm
-            case "ENTITY_ENDER_DRAGON_GROWL" ->
-                    SoundEvents.ENTITY_ENDER_DRAGON_GROWL;
-
-            // Varsayılan
-            default ->
-                    SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
+        return switch (color.toLowerCase()) {
+            case "red" -> new float[]{1.0f, 0.0f, 0.0f};
+            case "blue" -> new float[]{0.0f, 0.5f, 1.0f};
+            case "yellow" -> new float[]{1.0f, 1.0f, 0.0f};
+            case "white" -> new float[]{1.0f, 1.0f, 1.0f};
+            case "gray" -> new float[]{0.5f, 0.5f, 0.5f};
+            case "purple" -> new float[]{0.7f, 0.3f, 1.0f};
+            default -> new float[]{0.0f, 1.0f, 0.0f}; // green
         };
     }
+
+    /* ---------------------------------------------------------------- */
+    /* SABİT RAHAT SES */
+    /* ---------------------------------------------------------------- */
+
+    /**
+     * Tek ve rahatlatıcı uyarı sesi
+     * ENTITY_EXPERIENCE_ORB_PICKUP:
+     * - Kulak tırmalamaz
+     * - Vanilla uyumlu
+     * - PvP'de rahatsız etmez
+     */
+    public static SoundEvent getUyariSesi() {
+        return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
     }
+}
