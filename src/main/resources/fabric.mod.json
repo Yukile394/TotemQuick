@@ -3,8 +3,10 @@
   "id": "totemquick",
   "version": "${version}",
   "name": "TotemQuick",
-  "icon": "assets/totemquick/icon.png",
-  "description": "TotemQuick, Minecraft’ta hayatta kalmayı kolaylaştıran güçlü bir moddur...",
+  "icon": {
+    "128": "icon.png"
+  },
+  "description": "TotemQuick, Minecraft’ta hayatta kalmayı kolaylaştıran güçlü bir moddur. Mod, oyuncunun L tuşuna basarak aktif edebileceği hızlı bir totem sistemi sunar. TotemQuick, offhand’inizde Totem of Undying yoksa otomatik olarak envanterden takar ve sizi ölümden korur. Modun ayarlarından tuş atamalarını değiştirebilir, sesli uyarıları açıp kapatabilir ve uyarı renklerini özelleştirebilirsiniz. Kullanımı basit ve etkili olan TotemQuick, hayatta kalma mücadelelerinde hızlı tepki vermenizi sağlar ve Minecraft deneyiminizi çok daha güvenli ve konforlu hâle getirir.",
   "authors": ["Yukile"],
   "license": "Apache-2.0",
   "environment": "client",
