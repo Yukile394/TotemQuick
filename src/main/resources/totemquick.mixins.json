@@ -5,6 +5,7 @@
   "client": [
     "ScreenAccessor",
     "ClientRenderMixin"
+    "HitColorMixin"
   ],
   "injectors": {
     "defaultRequire": 1
