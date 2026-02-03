@@ -41,6 +41,12 @@ public class TotemQuickConfig implements ConfigData {
     // Elytra görünümü gizlensin mi
     public boolean elytraGizle = false;
 
+    // Elytra renkli olsun mu
+    public boolean elytraRenkli = false;
+
+    // Elytra rengi (HEX) örnek: FF0000 = kırmızı, 00FF00 = yeşil, 0000FF = mavi
+    public String elytraRenk = "FF0000";
+
     // Yere atılan item büyük görünsün mü
     public boolean buyukItem = false;
 
