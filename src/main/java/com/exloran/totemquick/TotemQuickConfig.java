@@ -15,8 +15,19 @@ public class TotemQuickConfig implements ConfigData {
     // Sesli uyarı açık mı
     public boolean sesliUyari = true;
 
-    // Totem yok uyarı rengi
+    // Totem yok uyarı rengi (chat için)
     public String uyarirengi = "red";
+
+    // Elytra görünümü gizlensin mi
+    public boolean elytraGizle = false;
+
+    // ================== HIT COLOR ==================
+
+    // HitColor aktif mi
+    public boolean hitColorEnabled = true;
+
+    // Hit rengi (isim veya hex): red, yellow, #FF0000, #00FF00 vs.
+    public String hitColor = "#FF0000";
 
     /* -------------------------------------------------- */
     /* RENK PARSE (CHAT) */
@@ -35,20 +46,4 @@ public class TotemQuickConfig implements ConfigData {
     public static SoundEvent getUyariSesi() {
         return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
     }
-
-    // ================== EK AYAR ==================
-
-    // Elytra görünümü gizlensin mi
-    public boolean elytraGizle = false;
-
-    // ================== HIT COLOR ==================
-
-    // HitColor aktif mi
-    public boolean hitColorEnabled = false;
-
-    // Hit rengi (HEX) örnek: FF0000 = kırmızı, 00FF00 = yeşil, 0000FF = mavi
-    public String hitColorHex = "FF0000";
-
-    // Hit rengi şeffaflığı (0 - 255) | 255 = tam opak, 0 = görünmez
-    public int hitColorAlpha = 255;
 }
