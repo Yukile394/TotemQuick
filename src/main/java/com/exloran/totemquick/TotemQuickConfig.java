@@ -26,11 +26,11 @@ public class TotemQuickConfig implements ConfigData {
     // HitColor aktif mi
     public boolean hitColorEnabled = true;
 
-    // Hit rengi (isim veya hex): red, yellow, #FF0000, #00FF00 vs.
-    public String hitColor = "#FF0000";
+    // Hit rengi (isim): red, green, blue, yellow, aqua, white vs.
+    public String hitColor = "red";
 
     /* -------------------------------------------------- */
-    /* RENK PARSE (CHAT) */
+    /* RENK PARSE */
     /* -------------------------------------------------- */
 
     public static Formatting parseColor(String color) {
@@ -40,7 +40,7 @@ public class TotemQuickConfig implements ConfigData {
     }
 
     /* -------------------------------------------------- */
-    /* SABİT RAHATLATICI SES */
+    /* SABİT SES */
     /* -------------------------------------------------- */
 
     public static SoundEvent getUyariSesi() {
