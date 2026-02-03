@@ -14,12 +14,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Elytra gizleme
+ * Elytra gizleme (1.21 uyumlu)
  */
 @Mixin(ElytraFeatureRenderer.class)
 class ElytraHideMixin {
 
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
+    @Inject(
+        method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/entity/LivingEntity;FFFFFF)V",
+        at = @At("HEAD"),
+        cancellable = true
+    )
     private void hideElytra(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light,
                             LivingEntity entity, float limbAngle, float limbDistance, float tickDelta,
                             float animationProgress, float headYaw, float headPitch, CallbackInfo ci) {
@@ -32,12 +36,15 @@ class ElytraHideMixin {
 }
 
 /**
- * Yere atılan item'i büyütme
+ * Yere atılan item'i büyütme (1.21 uyumlu)
  */
 @Mixin(ItemEntityRenderer.class)
 class BigItemMixin {
 
-    @Inject(method = "render", at = @At("HEAD"))
+    @Inject(
+        method = "render(Lnet/minecraft/entity/ItemEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
+        at = @At("HEAD")
+    )
     private void scaleItem(ItemEntity itemEntity, float f, float g, MatrixStack matrices,
                            VertexConsumerProvider vertexConsumers, int i, CallbackInfo ci) {
 
