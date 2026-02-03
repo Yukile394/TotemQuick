@@ -40,4 +40,15 @@ public class TotemQuickConfig implements ConfigData {
 
     // Elytra görünümü gizlensin mi
     public boolean elytraGizle = false;
+
+    // ================== HIT COLOR ==================
+
+    // HitColor aktif mi
+    public boolean hitColorEnabled = false;
+
+    // Hit rengi (HEX) örnek: FF0000 = kırmızı, 00FF00 = yeşil, 0000FF = mavi
+    public String hitColorHex = "FF0000";
+
+    // Hit rengi şeffaflığı (0 - 255) | 255 = tam opak, 0 = görünmez
+    public int hitColorAlpha = 255;
 }
