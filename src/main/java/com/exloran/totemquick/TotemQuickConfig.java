@@ -35,4 +35,15 @@ public class TotemQuickConfig implements ConfigData {
     public static SoundEvent getUyariSesi() {
         return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
     }
+
+    // ================== YENİ AYARLAR ==================
+
+    // Elytra görünümü gizlensin mi
+    public boolean elytraGizle = false;
+
+    // Yere atılan item büyük görünsün mü
+    public boolean buyukItem = false;
+
+    // Yere atılan item ölçeği
+    public float buyukItemScale = 2.0f;
 }
