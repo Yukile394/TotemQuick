@@ -2,73 +2,36 @@ package com.exloran.totemquick.mixin;
 
 import com.exloran.totemquick.TotemQuickConfig;
 import me.shedaniel.autoconfig.AutoConfig;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.util.Formatting;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Mixin(LivingEntityRenderer.class)
-public class HitColorMixin {
+public abstract class HitColorMixin<T extends LivingEntity> {
 
-    @ModifyArg(
+    @ModifyArgs(
         method = "render",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V"
-        ),
-        index = 4 // RED
+        )
     )
-    private float changeRed(float red) {
+    private void totemquick$changeColor(Args args) {
         TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
-        if (!config.hitColorEnabled) return red;
 
-        Formatting f = TotemQuickConfig.parseColor(config.hitColor);
-        return colorToRGB(f)[0];
-    }
+        if (!config.hitColorEnabled) return;
 
-    @ModifyArg(
-        method = "render",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V"
-        ),
-        index = 5 // GREEN
-    )
-    private float changeGreen(float green) {
-        TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
-        if (!config.hitColorEnabled) return green;
+        float[] rgb = TotemQuickConfig.parseHexOrNameToRGB(config.hitColor);
 
-        Formatting f = TotemQuickConfig.parseColor(config.hitColor);
-        return colorToRGB(f)[1];
-    }
-
-    @ModifyArg(
-        method = "render",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V"
-        ),
-        index = 6 // BLUE
-    )
-    private float changeBlue(float blue) {
-        TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
-        if (!config.hitColorEnabled) return blue;
-
-        Formatting f = TotemQuickConfig.parseColor(config.hitColor);
-        return colorToRGB(f)[2];
-    }
-
-    private float[] colorToRGB(Formatting f) {
-        return switch (f) {
-            case RED -> new float[]{1f, 0f, 0f};
-            case GREEN -> new float[]{0f, 1f, 0f};
-            case BLUE -> new float[]{0f, 0f, 1f};
-            case YELLOW -> new float[]{1f, 1f, 0f};
-            case AQUA -> new float[]{0f, 1f, 1f};
-            case LIGHT_PURPLE -> new float[]{1f, 0f, 1f};
-            case WHITE -> new float[]{1f, 1f, 1f};
-            default -> new float[]{1f, 0f, 0f}; // varsayılan kırmızı
-        };
+        // index: 4=r, 5=g, 6=b, 7=a  (bazı mappinglerde 6-7-8-9 olur, ama ModifyArgs daha güvenli)
+        args.set(4, rgb[0]);
+        args.set(5, rgb[1]);
+        args.set(6, rgb[2]);
+        args.set(7, 1.0F); // alpha
     }
 }
