@@ -3,7 +3,6 @@ package com.exloran.totemquick.mixin;
 import com.exloran.totemquick.TotemQuickConfig;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.Formatting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,7 +17,7 @@ public class HitColorMixin {
             value = "INVOKE",
             target = "Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V"
         ),
-        index = 6
+        index = 4 // RED
     )
     private float changeRed(float red) {
         TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
@@ -34,7 +33,7 @@ public class HitColorMixin {
             value = "INVOKE",
             target = "Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V"
         ),
-        index = 7
+        index = 5 // GREEN
     )
     private float changeGreen(float green) {
         TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
@@ -50,7 +49,7 @@ public class HitColorMixin {
             value = "INVOKE",
             target = "Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V"
         ),
-        index = 8
+        index = 6 // BLUE
     )
     private float changeBlue(float blue) {
         TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
@@ -61,7 +60,6 @@ public class HitColorMixin {
     }
 
     private float[] colorToRGB(Formatting f) {
-        // Basit renk eşlemesi
         return switch (f) {
             case RED -> new float[]{1f, 0f, 0f};
             case GREEN -> new float[]{0f, 1f, 0f};
