@@ -2,7 +2,10 @@
   "required": false,
   "package": "com.exloran.totemquick.mixin",
   "compatibilityLevel": "JAVA_17",
-  "client": [],
+  "client": [
+    "ScreenAccessor",
+    "ClientRenderMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
