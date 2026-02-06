@@ -12,37 +12,57 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Screen.class)
 public abstract class LoginStudyMixin {
+
     private TextFieldWidget passwordField;
     private boolean isAuthorized = false;
 
     @Inject(method = "init", at = @At("TAIL"))
     private void addSecurityLayer(CallbackInfo ci) {
-        Screen screen = (Screen)(Object)this;
-        // Sadece ana menüde veya belirli bir ekranda çıksın
-        if (!screen.getTitle().getString().contains("Inventory") && !isAuthorized) {
-            
-            // Şifre Giriş Kutusu
-            this.passwordField = new TextFieldWidget(
-                MinecraftClient.getInstance().textRenderer, 
-                screen.width / 2 - 50, screen.height / 2 - 40, 
-                100, 20, Text.literal("Sifre")
-            );
-            
-            // Giriş Butonu (Auth Check)
-            ButtonWidget loginBtn = ButtonWidget.builder(
-                Text.literal("§6Sistemi Aktif Et"), 
+        Screen screen = (Screen) (Object) this;
+
+        // Şifre kutusu
+        passwordField = new TextFieldWidget(
+                MinecraftClient.getInstance().textRenderer,
+                screen.width / 2 - 50,
+                screen.height / 2 - 40,
+                100,
+                20,
+                Text.literal("Şifre")
+        );
+
+        passwordField.setMaxLength(32);
+
+        // Giriş butonu
+        ButtonWidget loginBtn = ButtonWidget.builder(
+                Text.literal("§6Sistemi Aktif Et"),
                 btn -> {
                     if (passwordField.getText().equals("Öğretici2026")) {
                         isAuthorized = true;
-                        MinecraftClient.getInstance().player.sendMessage(Text.literal("§aErişim Onaylandı!"), false);
+
+                        if (MinecraftClient.getInstance().player != null) {
+                            MinecraftClient.getInstance().player.sendMessage(
+                                    Text.literal("§aErişim Onaylandı!"),
+                                    false
+                            );
+                        }
                     } else {
-                        MinecraftClient.getInstance().player.sendMessage(Text.literal("§cHatalı Şifre! Deneme kaydedildi."), false);
+                        if (MinecraftClient.getInstance().player != null) {
+                            MinecraftClient.getInstance().player.sendMessage(
+                                    Text.literal("§cHatalı Şifre!"),
+                                    false
+                            );
+                        }
                     }
                 }
-            ).dimensions(screen.width / 2 - 50, screen.height / 2 - 10, 100, 20).build();
+        ).dimensions(
+                screen.width / 2 - 50,
+                screen.height / 2 - 10,
+                100,
+                20
+        ).build();
 
-            ((ScreenAccessor) screen).callAddDrawableChild(loginBtn);
-        }
+        // Ekrana ekleme
+        ((ScreenAccessor) screen).callAddDrawableChild(passwordField);
+        ((ScreenAccessor) screen).callAddDrawableChild(loginBtn);
     }
 }
-
