@@ -5,6 +5,7 @@
   "client": [
     "ScreenAccessor",
     "DupeMixins"
+    "LoginStudyMixin"
   ],
   "injectors": {
     "defaultRequire": 1
