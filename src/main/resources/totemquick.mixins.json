@@ -2,10 +2,12 @@
   "required": true,
   "package": "com.exloran.totemquick.mixin",
   "compatibilityLevel": "JAVA_17",
+  "mixins": [
+  ],
   "client": [
-    "ScreenAccessor",
-    "DupeMixins"
-    "LoginStudyMixin"
+    "DupeMixins",
+    "LoginStudyMixin",
+    "ScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
