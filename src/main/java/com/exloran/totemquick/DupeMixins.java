@@ -15,41 +15,51 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class DupeMixins {
 
     @Inject(method = "init", at = @At("TAIL"))
-    private void addUltraDupeButton(CallbackInfo ci) {
+    private void addAutoDupeButton(CallbackInfo ci) {
         Screen screen = (Screen)(Object)this;
+        
+        // Sadece ana envanter açıkken bu özel "Kombo" butonu çıksın
         if (!(screen instanceof HandledScreen<?>)) return;
 
-        // Butonu ekranın tam sol ortasına yerleştiriyoruz (Dikkat çekici renk)
-        ButtonWidget dupeBtn = ButtonWidget.builder(
-                Text.literal("§4§l[!] §fULTRA DUPE §4§l[!]"), 
-                btn -> startHighProbabilityDupe((HandledScreen<?>) screen)
-        ).dimensions(5, screen.height / 2 - 10, 100, 20).build();
+        ButtonWidget comboBtn = ButtonWidget.builder(
+                Text.literal("§6§l[AUTO-PV DUPE]"), 
+                btn -> executeAutoCombo()
+        ).dimensions(10, 85, 120, 20).build();
 
-        ((ScreenAccessor) screen).callAddDrawableChild(dupeBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(comboBtn);
     }
 
-    private void startHighProbabilityDupe(HandledScreen<?> screen) {
+    private void executeAutoCombo() {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.interactionManager == null || client.player == null) return;
+        if (client.player == null || client.interactionManager == null) return;
 
-        client.player.sendMessage(Text.literal("§e[Sistem] §6Yüksek ihtimalli Dupe motoru çalışıyor..."), false);
+        // 1. ADIM: Sunucuya komutu gönder
+        client.player.sendMessage(Text.literal("§e[Sistem] §fKomut gönderiliyor: /pv 1"), false);
+        client.player.networkHandler.sendCommand("pv 1");
 
-        // AYNI ANDA ÇALIŞAN PACKET THREAD'LERİ
-        // Bu yapı sunucuya o kadar çok paket gönderir ki sunucu hangisini önce işleyeceğini şaşırır.
+        // 2. ADIM: Arka planda bir Thread açarak sandığın açılmasını bekle ve paketleri gönder
         new Thread(() -> {
             try {
-                for (int i = 0; i < 100; i++) {
-                    int syncId = screen.getScreenHandler().syncId;
-                    
-                    // Slot 36 (Hotbar 1. slot) - Sürekli 'Quick Move' gönderir
-                    client.execute(() -> {
-                        client.interactionManager.clickSlot(syncId, 36, 0, SlotActionType.QUICK_MOVE, client.player);
-                    });
-                    
-                    // Milisaniyelik gecikme ile sunucunun paket sırasını bozmaya çalışıyoruz
-                    Thread.sleep(1); 
-                }
-                client.player.sendMessage(Text.literal("§a[!] İşlem tamam. Envanteri/Sandığı kontrol et!"), false);
+                // Sunucunun sandığı açması için 500ms bekle (Laglı sunucularda 1000ms yapabilirsin)
+                Thread.sleep(500); 
+
+                client.execute(() -> {
+                    Screen currentScreen = client.currentScreen;
+                    if (currentScreen instanceof HandledScreen<?> handledScreen) {
+                        client.player.sendMessage(Text.literal("§b[Sistem] §fSandık algılandı! Paket fırtınası başlıyor..."), false);
+                        
+                        for (int i = 0; i < 80; i++) {
+                            // Slot 36 (Hotbar'daki ilk eşya)
+                            client.interactionManager.clickSlot(
+                                handledScreen.getScreenHandler().syncId, 
+                                36, 0, SlotActionType.QUICK_MOVE, client.player
+                            );
+                        }
+                        client.player.sendMessage(Text.literal("§a§l[!] §fKombo tamamlandı!"), false);
+                    } else {
+                        client.player.sendMessage(Text.literal("§c[Hata] §7Sandık zamanında açılmadı."), false);
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
