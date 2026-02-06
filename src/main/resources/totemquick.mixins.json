@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_17",
   "client": [
     "ScreenAccessor",
+    "DupeMixins.java"
   ],
   "injectors": {
     "defaultRequire": 1
