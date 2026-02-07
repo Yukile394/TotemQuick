@@ -18,16 +18,14 @@ public class TotemQuickConfig implements ConfigData {
     // Totem yok uyarı rengi (chat için)
     public String uyarirengi = "red";
 
-    // Elytra görünümü gizlensin mi
-    public boolean elytraGizle = false;
+    // ================== FAKE HITBOXES ==================
 
-    // ================== HIT COLOR ==================
+    // Fake Hitboxes aktif mi? (Sadece görsel, boyut değiştirmez)
+    public boolean fakeHitboxesEnabled = false;
 
-    // HitColor aktif mi
-    public boolean hitColorEnabled = true;
-
-    // Hit rengi (isim veya hex): red, yellow, #FF0000, #00FF00 vs.
-    public String hitColor = "#FF0000";
+    // Fake Hitboxes rengi (isim veya HEX)
+    // Örnekler: red, green, blue, yellow, aqua, purple, white, black, #FF0000, #00FF00
+    public String fakeHitboxesColor = "red";
 
     /* -------------------------------------------------- */
     /* CHAT RENK PARSE */
@@ -40,7 +38,7 @@ public class TotemQuickConfig implements ConfigData {
     }
 
     /* -------------------------------------------------- */
-    /* HIT COLOR PARSE (HEX veya isim) */
+    /* FAKE HITBOX COLOR -> RGB (0..1)
     /* -------------------------------------------------- */
 
     public static float[] parseHexOrNameToRGB(String color) {
@@ -67,9 +65,12 @@ public class TotemQuickConfig implements ConfigData {
             case "green" -> new float[]{0f, 1f, 0f};
             case "blue" -> new float[]{0f, 0f, 1f};
             case "yellow" -> new float[]{1f, 1f, 0f};
-            case "aqua" -> new float[]{0f, 1f, 1f};
-            case "purple" -> new float[]{1f, 0f, 1f};
+            case "aqua", "cyan" -> new float[]{0f, 1f, 1f};
+            case "purple", "magenta" -> new float[]{1f, 0f, 1f};
             case "white" -> new float[]{1f, 1f, 1f};
+            case "black" -> new float[]{0f, 0f, 0f};
+            case "orange" -> new float[]{1f, 0.5f, 0f};
+            case "pink" -> new float[]{1f, 0.4f, 0.7f};
             default -> new float[]{1f, 0f, 0f};
         };
     }
