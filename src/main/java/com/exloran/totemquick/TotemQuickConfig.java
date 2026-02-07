@@ -18,14 +18,22 @@ public class TotemQuickConfig implements ConfigData {
     // Totem yok uyarı rengi (chat için)
     public String uyarirengi = "red";
 
-    // ================== FAKE HITBOXES ==================
+    // ================== FAKE HITBOXES (istersen kalsın) ==================
 
-    // Fake Hitboxes aktif mi? (Sadece görsel, boyut değiştirmez)
     public boolean fakeHitboxesEnabled = false;
-
-    // Fake Hitboxes rengi (isim veya HEX)
-    // Örnekler: red, green, blue, yellow, aqua, purple, white, black, #FF0000, #00FF00
     public String fakeHitboxesColor = "red";
+
+    // ================== HIT COLOR ==================
+
+    // Hit overlay renk değiştirme aktif mi?
+    public boolean hitColorEnabled = true;
+
+    // Hit overlay rengi (HEX veya isim)
+    // Örnek: #ff00ff, #00ff00, red, blue, pink...
+    public String hitColor = "#ff0000";
+
+    // Hit overlay alpha (0 = görünmez, 100 = tam opak)
+    public float hitAlpha = 30.0f;
 
     /* -------------------------------------------------- */
     /* CHAT RENK PARSE */
@@ -38,41 +46,42 @@ public class TotemQuickConfig implements ConfigData {
     }
 
     /* -------------------------------------------------- */
-    /* FAKE HITBOX COLOR -> RGB (0..1)
+    /* HIT COLOR -> RGBA INT */
     /* -------------------------------------------------- */
 
-    public static float[] parseHexOrNameToRGB(String color) {
-        if (color == null || color.isBlank()) return new float[]{1f, 0f, 0f};
+    public static int parseHitColorToRGBA(String color, float alpha) {
+        if (color == null || color.isBlank()) color = "#ff0000";
+
+        int r = 255, g = 0, b = 0;
 
         color = color.trim();
 
-        // HEX ise
         if (color.startsWith("#")) {
             try {
                 int rgb = Integer.parseInt(color.substring(1), 16);
-                float r = ((rgb >> 16) & 0xFF) / 255f;
-                float g = ((rgb >> 8) & 0xFF) / 255f;
-                float b = (rgb & 0xFF) / 255f;
-                return new float[]{r, g, b};
+                r = (rgb >> 16) & 0xFF;
+                g = (rgb >> 8) & 0xFF;
+                b = rgb & 0xFF;
             } catch (Exception ignored) {
-                return new float[]{1f, 0f, 0f};
+            }
+        } else {
+            switch (color.toLowerCase()) {
+                case "green" -> { r = 0; g = 255; b = 0; }
+                case "blue" -> { r = 0; g = 0; b = 255; }
+                case "yellow" -> { r = 255; g = 255; b = 0; }
+                case "aqua", "cyan" -> { r = 0; g = 255; b = 255; }
+                case "purple", "magenta" -> { r = 255; g = 0; b = 255; }
+                case "white" -> { r = 255; g = 255; b = 255; }
+                case "black" -> { r = 0; g = 0; b = 0; }
+                case "orange" -> { r = 255; g = 128; b = 0; }
+                case "pink" -> { r = 255; g = 100; b = 180; }
             }
         }
 
-        // İsim ise
-        return switch (color.toLowerCase()) {
-            case "red" -> new float[]{1f, 0f, 0f};
-            case "green" -> new float[]{0f, 1f, 0f};
-            case "blue" -> new float[]{0f, 0f, 1f};
-            case "yellow" -> new float[]{1f, 1f, 0f};
-            case "aqua", "cyan" -> new float[]{0f, 1f, 1f};
-            case "purple", "magenta" -> new float[]{1f, 0f, 1f};
-            case "white" -> new float[]{1f, 1f, 1f};
-            case "black" -> new float[]{0f, 0f, 0f};
-            case "orange" -> new float[]{1f, 0.5f, 0f};
-            case "pink" -> new float[]{1f, 0.4f, 0.7f};
-            default -> new float[]{1f, 0f, 0f};
-        };
+        float a = Math.max(0f, Math.min(100f, alpha));
+        int alphaByte = Math.round(255f * (a / 100f));
+
+        return (alphaByte << 24) | (b << 16) | (g << 8) | r;
     }
 
     /* -------------------------------------------------- */
