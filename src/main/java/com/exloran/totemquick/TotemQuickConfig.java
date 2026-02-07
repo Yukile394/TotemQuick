@@ -18,11 +18,6 @@ public class TotemQuickConfig implements ConfigData {
     // Totem yok uyarı rengi (chat için)
     public String uyarirengi = "red";
 
-    // ================== FAKE HITBOXES (istersen kalsın) ==================
-
-    public boolean fakeHitboxesEnabled = false;
-    public String fakeHitboxesColor = "red";
-
     // ================== HIT COLOR ==================
 
     // Hit overlay renk değiştirme aktif mi?
@@ -46,7 +41,7 @@ public class TotemQuickConfig implements ConfigData {
     }
 
     /* -------------------------------------------------- */
-    /* HIT COLOR -> RGBA INT */
+    /* HIT COLOR -> RGBA (ARGB INT)
     /* -------------------------------------------------- */
 
     public static int parseHitColorToRGBA(String color, float alpha) {
@@ -75,13 +70,15 @@ public class TotemQuickConfig implements ConfigData {
                 case "black" -> { r = 0; g = 0; b = 0; }
                 case "orange" -> { r = 255; g = 128; b = 0; }
                 case "pink" -> { r = 255; g = 100; b = 180; }
+                default -> { r = 255; g = 0; b = 0; }
             }
         }
 
         float a = Math.max(0f, Math.min(100f, alpha));
         int alphaByte = Math.round(255f * (a / 100f));
 
-        return (alphaByte << 24) | (b << 16) | (g << 8) | r;
+        // Minecraft format: ARGB
+        return (alphaByte << 24) | (r << 16) | (g << 8) | b;
     }
 
     /* -------------------------------------------------- */
