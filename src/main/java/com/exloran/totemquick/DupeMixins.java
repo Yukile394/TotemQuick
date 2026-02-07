@@ -17,96 +17,141 @@ import java.util.concurrent.Executors;
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    // Thread havuzu (AYNI)
+    // === THREAD ===
     private static final ExecutorService DUPE_EXECUTOR = Executors.newFixedThreadPool(4);
 
-    // DUPE AÇ/KAPA DURUMU (YENİ)
+    // === STATES (V2) ===
     private static boolean DUPE_ENABLED = false;
+    private static boolean DESYNC = false;
+    private static boolean SEND_PACKETS = true;
+    private static boolean DELAY_PACKETS = false;
+
+    // === RGB PEMBE V2 ===
+    private static int rgbTick = 0;
+    private static final String[] RGB = {"§d", "§5", "§d", "§f"};
+
+    private static String rgb(String s) {
+        rgbTick = (rgbTick + 1) % RGB.length;
+        return RGB[rgbTick] + s;
+    }
 
     @Inject(method = "init", at = @At("TAIL"))
     private void addUltisStyleUI(CallbackInfo ci) {
         Screen screen = (Screen) (Object) this;
         if (!(screen instanceof HandledScreen<?> handled)) return;
 
-        int startY = 10;
+        int x = 8;
+        int y = 8;
+        int w = 150;
+        int h = 18;
 
-        // === DUPE AÇ/KAPA BUTONU (SOLDA) ===
+        // === DUPE ON/OFF ===
         ButtonWidget toggleBtn = ButtonWidget.builder(
-                Text.literal(DUPE_ENABLED ? "§aDUPE: ON" : "§cDUPE: OFF"),
-                btn -> {
+                Text.literal(rgb("DUPE: " + (DUPE_ENABLED ? "ON" : "OFF"))),
+                b -> {
                     DUPE_ENABLED = !DUPE_ENABLED;
-                    btn.setMessage(Text.literal(DUPE_ENABLED ? "§aDUPE: ON" : "§cDUPE: OFF"));
+                    b.setMessage(Text.literal(rgb("DUPE: " + (DUPE_ENABLED ? "ON" : "OFF"))));
                 }
-        ).dimensions(10, startY, 110, 20).build();
+        ).dimensions(x, y, w, h).build();
 
-        // === ANA BUTON: ULTRA DUPE ===
-        ButtonWidget dupeBtn = ButtonWidget.builder(
-                Text.literal("§d§l» ULTRA DUPE «"),
-                btn -> {
-                    if (!DUPE_ENABLED) {
-                        if (MinecraftClient.getInstance().player != null) {
-                            MinecraftClient.getInstance().player.sendMessage(
-                                    Text.literal("§cDupe kapalı! Önce aç."),
-                                    false
-                            );
-                        }
-                        return;
-                    }
-                    runUltisDupe(handled);
+        // === DE-SYNC ===
+        ButtonWidget desyncBtn = ButtonWidget.builder(
+                Text.literal(rgb("De-sync: " + DESYNC)),
+                b -> {
+                    DESYNC = !DESYNC;
+                    b.setMessage(Text.literal(rgb("De-sync: " + DESYNC)));
                 }
-        ).dimensions(10, startY + 25, 110, 20).build();
+        ).dimensions(x, y += 20, w, h).build();
 
-        // === YARDIMCI BUTON: AUTO PV ===
-        ButtonWidget pvBtn = ButtonWidget.builder(
-                Text.literal("§b§l» AUTO PV 1 «"),
-                btn -> {
+        // === SEND PACKETS ===
+        ButtonWidget sendBtn = ButtonWidget.builder(
+                Text.literal(rgb("Send packets: " + SEND_PACKETS)),
+                b -> {
+                    SEND_PACKETS = !SEND_PACKETS;
+                    b.setMessage(Text.literal(rgb("Send packets: " + SEND_PACKETS)));
+                }
+        ).dimensions(x, y += 20, w, h).build();
+
+        // === DELAY PACKETS ===
+        ButtonWidget delayBtn = ButtonWidget.builder(
+                Text.literal(rgb("Delay packets: " + DELAY_PACKETS)),
+                b -> {
+                    DELAY_PACKETS = !DELAY_PACKETS;
+                    b.setMessage(Text.literal(rgb("Delay packets: " + DELAY_PACKETS)));
+                }
+        ).dimensions(x, y += 20, w, h).build();
+
+        // === SAVE GUI ===
+        ButtonWidget saveBtn = ButtonWidget.builder(
+                Text.literal(rgb("Save GUI")),
+                b -> {
+                    MinecraftClient.getInstance().player.sendMessage(
+                            Text.literal("§d[ULTIS V2] §fGUI state saved."),
+                            false
+                    );
+                }
+        ).dimensions(x, y += 20, w, h).build();
+
+        // === DISCONNECT & SEND ===
+        ButtonWidget discBtn = ButtonWidget.builder(
+                Text.literal(rgb("Disconnect & send")),
+                b -> {
                     MinecraftClient client = MinecraftClient.getInstance();
-                    if (client.player != null && client.player.networkHandler != null) {
-                        client.player.networkHandler.sendCommand("pv 1");
+                    if (client.player != null) {
+                        client.player.sendMessage(
+                                Text.literal("§d[ULTIS V2] §fSoft disconnect simulate."),
+                                false
+                        );
                     }
                 }
-        ).dimensions(10, startY + 50, 110, 20).build();
+        ).dimensions(x, y += 20, w, h).build();
+
+        // === FABRICATE PACKET (V2) ===
+        ButtonWidget fabBtn = ButtonWidget.builder(
+                Text.literal(rgb("Fabricate packet")),
+                b -> runUltisDupeV2(handled)
+        ).dimensions(x, y += 20, w, h).build();
 
         ((ScreenAccessor) screen).callAddDrawableChild(toggleBtn);
-        ((ScreenAccessor) screen).callAddDrawableChild(dupeBtn);
-        ((ScreenAccessor) screen).callAddDrawableChild(pvBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(desyncBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(sendBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(delayBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(saveBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(discBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(fabBtn);
     }
 
-    private void runUltisDupe(HandledScreen<?> screen) {
+    // === V2 MANTIK (KONTROLLÜ BURST) ===
+    private void runUltisDupeV2(HandledScreen<?> screen) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || client.interactionManager == null) return;
+        if (!DUPE_ENABLED || client.player == null || client.interactionManager == null) return;
 
-        client.player.sendMessage(
-                Text.literal("§d§l[ULTIS] §fSaldırı başlatıldı. Senkronizasyon kırılıyor..."),
-                false
-        );
+        int delay = DELAY_PACKETS ? 8 : 2;
+        int loops = DESYNC ? 15 : 30;
 
-        for (int t = 0; t < 4; t++) {
-            DUPE_EXECUTOR.execute(() -> {
-                try {
-                    for (int i = 0; i < 40; i++) {
-                        int syncId = screen.getScreenHandler().syncId;
-
-                        client.execute(() -> {
-                            client.interactionManager.clickSlot(
-                                    syncId,
-                                    36,
-                                    0,
-                                    SlotActionType.QUICK_MOVE,
-                                    client.player
-                            );
-                        });
-
-                        Thread.sleep(2);
+        DUPE_EXECUTOR.execute(() -> {
+            try {
+                int syncId = screen.getScreenHandler().syncId;
+                for (int i = 0; i < loops; i++) {
+                    if (SEND_PACKETS) {
+                        client.execute(() ->
+                                client.interactionManager.clickSlot(
+                                        syncId,
+                                        36,
+                                        0,
+                                        SlotActionType.QUICK_MOVE,
+                                        client.player
+                                )
+                        );
                     }
-                } catch (InterruptedException ignored) {
+                    Thread.sleep(delay);
                 }
-            });
-        }
+            } catch (InterruptedException ignored) {}
+        });
 
         client.player.sendMessage(
-                Text.literal("§a§l[BAŞARILI] §fPaketler hedefe ulaştı!"),
+                Text.literal("§d§l[ULTIS V2] §fPacket cycle executed."),
                 false
         );
     }
-}
+            }
