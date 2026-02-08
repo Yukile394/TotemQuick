@@ -4,8 +4,8 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [],
   "client": [
-    "HitColorMixins",
-    "ScreenAccessor"
+    "ScreenAccessor",
+    "HitColorMixins"
   ],
   "injectors": {
     "defaultRequire": 1
