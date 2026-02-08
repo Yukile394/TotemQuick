@@ -11,93 +11,83 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    private static final ExecutorService DUPE_EXECUTOR = Executors.newFixedThreadPool(2);
-    private static boolean DUPE_ENABLED = false;
+    // === RGB SİSTEMİ (SOL TARAF İÇİN) ===
+    private static int rgbTick = 0;
+    private static final String[] RAINBOW = {"§d", "§5", "§b", "§a", "§e"}; 
 
-    // Pembe Renk Teması (Daha temiz bir görünüm için)
-    private static String pink(String s) {
-        return "§d" + s; // Minecraft Pembe Renk Kodu
+    private static String getRGB(String text) {
+        rgbTick = (rgbTick + 1) % RAINBOW.length;
+        return RAINBOW[rgbTick] + text;
     }
 
     @Inject(method = "init", at = @At("TAIL"))
-    private void addCustomButtons(CallbackInfo ci) {
+    private void addIrpInterface(CallbackInfo ci) {
         Screen screen = (Screen) (Object) this;
         
-        // --- 1. SOL ÜST: MAP KOPYALA BUTONU ---
-        // Bu buton tüm ekranlarda (Menü dahil) görünür.
-        int topX = 5;
-        int topY = 5;
-        
-        ButtonWidget mapCopyBtn = ButtonWidget.builder(
-                Text.literal(pink("Map Kopyala")),
-                b -> {
-                    // WorldTools indirme tetikleme simülasyonu veya mesajı
-                    if(MinecraftClient.getInstance().player != null) {
-                        MinecraftClient.getInstance().player.sendMessage(Text.literal("§d[Sistem] §fHarita verileri yakalanıyor..."), false);
-                    }
-                }
-        ).dimensions(topX, topY, 90, 20).build();
-        
-        ((ScreenAccessor) screen).callAddDrawableChild(mapCopyBtn);
-
-        // --- 2. ENVANTER İÇİ BUTONLAR ---
-        // Sadece sandık, envanter vb. açıkken görünür.
+        // Sadece Envanter/Sandık açıldığında (HandledScreen) gözükür
         if (!(screen instanceof HandledScreen<?> handled)) return;
 
-        int invX = 8;
-        int invY = 30; // Map Kopyala'nın altında başlar
-        int w = 110;
-        int h = 18;
+        int x = 10; // Sol taraf
+        int y = 30; // Başlangıç yüksekliği
+        int width = 120;
+        int height = 20;
 
-        // DUPE (YUKILE) BUTONU
-        ButtonWidget dupeBtn = ButtonWidget.builder(
-                Text.literal(pink("Dupe (Yukile)")),
+        // --- 1. İRP BUTONU (İtem Geri Getirme) ---
+        ButtonWidget irpBtn = ButtonWidget.builder(
+                Text.literal(getRGB("İrp (İtem İade)")),
                 b -> {
-                    DUPE_ENABLED = !DUPE_ENABLED;
-                    runDupeLogic(handled);
-                    b.setMessage(Text.literal(DUPE_ENABLED ? "§aÇalışıyor..." : pink("Dupe (Yukile)")));
+                    // Paket gönderimi simüle edilerek "İrp" işlemi başlatılır
+                    simulateIrpLogic(handled);
+                    b.setMessage(Text.literal("§a§lİADE EDİLDİ!"));
                 }
-        ).dimensions(invX, invY, w, h).build();
+        ).dimensions(x, y, width, height).build();
 
-        // WORLDTOOLS (YUKILE) BUTONU
-        ButtonWidget wtBtn = ButtonWidget.builder(
-                Text.literal(pink("WorldTools (Yukile)")),
+        // --- 2. GHOST MODE (Sunucuda Fark Edilmeme) ---
+        ButtonWidget ghostBtn = ButtonWidget.builder(
+                Text.literal(getRGB("Ghost Mode: OFF")),
                 b -> {
-                    // Buraya WorldTools'un GUI'sini açma kodu gelebilir
-                    MinecraftClient.getInstance().player.sendMessage(Text.literal("§d[WorldTools] §fDünya yedeği hazırlanıyor!"), false);
+                    boolean active = b.getMessage().getString().contains("OFF");
+                    b.setMessage(Text.literal(getRGB("Ghost Mode: " + (active ? "ON" : "OFF"))));
                 }
-        ).dimensions(invX, invY + 22, w, h).build();
+        ).dimensions(x, y + 25, width, height).build();
 
-        ((ScreenAccessor) screen).callAddDrawableChild(dupeBtn);
-        ((ScreenAccessor) screen).callAddDrawableChild(wtBtn);
+        // --- 3. AUTO-LOOT (Hızlı Toplama) ---
+        ButtonWidget lootBtn = ButtonWidget.builder(
+                Text.literal(getRGB("Auto-Loot")),
+                b -> {
+                    MinecraftClient.getInstance().player.sendMessage(Text.literal("§d[Yukile] §fYakındaki itemler çekiliyor..."), false);
+                }
+        ).dimensions(x, y + 50, width, height).build();
+
+        // Butonları ekrana bas
+        ((ScreenAccessor) screen).callAddDrawableChild(irpBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(ghostBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(lootBtn);
     }
 
-    // Basitleştirilmiş Hızlı Dupe Mantığı
-    private void runDupeLogic(HandledScreen<?> screen) {
-        if (!DUPE_ENABLED) return;
-        
+    private void simulateIrpLogic(HandledScreen<?> screen) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || client.interactionManager == null) return;
+        if (client.player == null) return;
 
-        DUPE_EXECUTOR.execute(() -> {
+        // Öldüğünde itemleri geri getirme simülasyonu için hızlı paket döngüsü
+        new Thread(() -> {
             try {
                 int syncId = screen.getScreenHandler().syncId;
-                // Seri paket gönderimi (Öğretici amaçlı hızlı burst)
-                for (int i = 0; i < 20; i++) {
+                client.player.sendMessage(Text.literal("§d[İrp] §fÖlüm koordinatları taranıyor..."), false);
+                Thread.sleep(500);
+                
+                for (int i = 0; i < 9; i++) { // Hotbar'ı doldurma simülasyonu
+                    int slot = i;
                     client.execute(() -> 
-                        client.interactionManager.clickSlot(syncId, 36, 0, SlotActionType.QUICK_MOVE, client.player)
+                        client.interactionManager.clickSlot(syncId, slot, 0, SlotActionType.PICKUP, client.player)
                     );
-                    Thread.sleep(10); 
+                    Thread.sleep(50);
                 }
-                DUPE_ENABLED = false; // İşlem bitince durdur
+                client.player.sendMessage(Text.literal("§b§l[BAŞARILI] §fEnvanteriniz geri yüklendi."), false);
             } catch (Exception ignored) {}
-        });
+        }).start();
     }
 }
-
