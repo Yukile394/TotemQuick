@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InGameHud.class)
-public abstract class LoginStudyMixin {
+public abstract class HitColorMixin {
 
     // 1.21 uyumlu, crash yapmaz, hedefi her zaman bulunur
     @Inject(method = "render", at = @At("TAIL"))
