@@ -5,6 +5,7 @@
   "mixins": [],
   "client": [
     "ScreenAccessor",
+    "DupeMixins"
   ],
   "injectors": {
     "defaultRequire": 1
