@@ -10,12 +10,15 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
+@Environment(EnvType.CLIENT)
 @Mixin(Screen.class)
 public abstract class HitColorMixins {
 
     @Inject(method = "render", at = @At("TAIL"))
-    private void totemquick$drawCustomHitOverlay(DrawContext context, float tickDelta, CallbackInfo ci) {
+    private void drawHitOverlay(DrawContext context, float tickDelta, CallbackInfo ci) {
         TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
         if (!config.hitColorEnabled) return;
@@ -24,14 +27,12 @@ public abstract class HitColorMixins {
         PlayerEntity player = client.player;
         if (player == null) return;
 
-        // Hasar aldıysa
         if (player.hurtTime > 0) {
             int color = TotemQuickConfig.parseHitColorToRGBA(config.hitColor, config.hitAlpha);
 
             int w = client.getWindow().getScaledWidth();
             int h = client.getWindow().getScaledHeight();
 
-            // Ekranın tamamına overlay
             context.fill(0, 0, w, h, color);
         }
     }
