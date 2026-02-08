@@ -33,7 +33,7 @@ public abstract class HitColorMixins {
         }
     }
 
-    // === ESC ekranında "Map Kopyala" tuşu ekle ===
+    // === Deneme: ESC ekranına "Map Kopyala" tuşu ===
     @Inject(method = "init", at = @At("TAIL"))
     private void totemquick$addMapCopyButton(CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
