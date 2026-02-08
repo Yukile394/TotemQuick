@@ -2,31 +2,38 @@ package com.exloran.totemquick.mixin;
 
 import com.exloran.totemquick.TotemQuickConfig;
 import me.shedaniel.autoconfig.AutoConfig;
-import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.entity.player.PlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InGameHud.class)
 public abstract class LoginStudyMixin {
 
-    // Hasar alınca çizilen kırmızı overlay rengini değiştirir (1.21 uyumlu)
-    @ModifyArg(
-            method = "render",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"
-            ),
-            index = 4
-    )
-    private int totemquick$changeHitColor(int originalColor) {
+    // 1.21 uyumlu, crash yapmaz, hedefi her zaman bulunur
+    @Inject(method = "render", at = @At("TAIL"))
+    private void totemquick$drawCustomHitOverlay(DrawContext context, float tickDelta, CallbackInfo ci) {
         TotemQuickConfig config = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
-        if (!config.hitColorEnabled) {
-            return originalColor;
-        }
+        if (!config.hitColorEnabled) return;
 
-        return TotemQuickConfig.parseHitColorToRGBA(config.hitColor, config.hitAlpha);
+        MinecraftClient client = MinecraftClient.getInstance();
+        PlayerEntity player = client.player;
+        if (player == null) return;
+
+        // Hasar efekti varsa (hurtTime > 0)
+        if (player.hurtTime > 0) {
+            int color = TotemQuickConfig.parseHitColorToRGBA(config.hitColor, config.hitAlpha);
+
+            int w = client.getWindow().getScaledWidth();
+            int h = client.getWindow().getScaledHeight();
+
+            // Ekranın tamamına yarı saydam overlay çiziyoruz
+            context.fill(0, 0, w, h, color);
+        }
     }
 }
