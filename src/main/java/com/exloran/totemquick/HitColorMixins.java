@@ -9,6 +9,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,7 +25,6 @@ public abstract class HitColorMixins {
         PlayerEntity player = client.player;
         if (player == null) return;
 
-        // === Hit Color Overlay ===
         if (config.hitColorEnabled && player.hurtTime > 0) {
             int color = TotemQuickConfig.parseHitColorToRGBA(config.hitColor, config.hitAlpha);
             int w = client.getWindow().getScaledWidth();
@@ -37,26 +37,30 @@ public abstract class HitColorMixins {
     @Inject(method = "init", at = @At("TAIL"))
     private void totemquick$addMapCopyButton(CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
-        // Java 17 uyumlu klasik instanceof kullanımı
-        if (!(Object) this instanceof Screen) return;
-        Screen screen = (Screen) (Object) this;
+
+        // Java 17 uyumlu
+        if (!(this instanceof Screen)) return;
+        Screen screen = (Screen) this;
 
         int buttonWidth = 100;
         int buttonHeight = 20;
         int x = screen.width / 2 - buttonWidth / 2;
         int y = screen.height - 50;
 
-        screen.addDrawableChild(new ButtonWidget(x, y, buttonWidth, buttonHeight, "Map Kopyala", button -> {
-            PlayerEntity player = client.player;
-            if (player != null) {
-                ItemStack mainHand = player.getMainHandStack();
-                if (mainHand.getItem() == Items.FILLED_MAP) {
-                    player.getInventory().insertStack(mainHand.copy());
-                    client.player.sendMessage(
-                        net.minecraft.text.Text.literal("Harita kopyalandı!"), true
-                    );
+        screen.addDrawableChild(new ButtonWidget(
+            x, y, buttonWidth, buttonHeight,
+            Text.literal("Map Kopyala"),   // Text nesnesi
+            button -> {
+                PlayerEntity player = client.player;
+                if (player != null) {
+                    ItemStack mainHand = player.getMainHandStack();
+                    if (mainHand.getItem() == Items.FILLED_MAP) {
+                        player.getInventory().insertStack(mainHand.copy());
+                        client.player.sendMessage(Text.literal("Harita kopyalandı!"), true);
+                    }
                 }
-            }
-        }));
+            },
+            () -> Text.empty() // narrationSupplier
+        ));
     }
 }
