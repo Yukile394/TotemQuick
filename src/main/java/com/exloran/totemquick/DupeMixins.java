@@ -14,79 +14,87 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    // === RGB SİSTEMİ (SOL TARAF İÇİN) ===
-    private static int rgbTick = 0;
-    private static final String[] RAINBOW = {"§d", "§5", "§b", "§a", "§e"}; 
+    private static int colorTick = 0;
+    private static final String[] ILLEGAL_RGB = {"§d", "§5", "§c", "§4", "§b"};
 
-    private static String getRGB(String text) {
-        rgbTick = (rgbTick + 1) % RAINBOW.length;
-        return RAINBOW[rgbTick] + text;
+    private static String illegalRgb(String text) {
+        colorTick = (colorTick + 1) % ILLEGAL_RGB.length;
+        return ILLEGAL_RGB[colorTick] + text;
     }
 
     @Inject(method = "init", at = @At("TAIL"))
-    private void addIrpInterface(CallbackInfo ci) {
+    private void addIllegalInterface(CallbackInfo ci) {
         Screen screen = (Screen) (Object) this;
         
-        // Sadece Envanter/Sandık açıldığında (HandledScreen) gözükür
+        // Sadece Envanter/Sandık ekranında aktif olur
         if (!(screen instanceof HandledScreen<?> handled)) return;
 
-        int x = 10; // Sol taraf
-        int y = 30; // Başlangıç yüksekliği
-        int width = 120;
-        int height = 20;
+        int x = 8; 
+        int y = 20;
+        int w = 130;
+        int h = 18;
 
-        // --- 1. İRP BUTONU (İtem Geri Getirme) ---
+        // --- 1. İRP (ITEM RESTORE PROTOCOL) ---
         ButtonWidget irpBtn = ButtonWidget.builder(
-                Text.literal(getRGB("İrp (İtem İade)")),
+                Text.literal(illegalRgb("» İrp (İade-i İtibar)")),
                 b -> {
-                    // Paket gönderimi simüle edilerek "İrp" işlemi başlatılır
-                    simulateIrpLogic(handled);
-                    b.setMessage(Text.literal("§a§lİADE EDİLDİ!"));
+                    sendIllegalMessage("§f[İrp] §7Ölüm verisi çekiliyor...");
+                    simulatePacketExploit(handled, 50);
                 }
-        ).dimensions(x, y, width, height).build();
+        ).dimensions(x, y, w, h).build();
 
-        // --- 2. GHOST MODE (Sunucuda Fark Edilmeme) ---
-        ButtonWidget ghostBtn = ButtonWidget.builder(
-                Text.literal(getRGB("Ghost Mode: OFF")),
+        // --- 2. NEW DUPE (CHUNK OVERLOAD) ---
+        ButtonWidget dupeBtn = ButtonWidget.builder(
+                Text.literal(illegalRgb("» Chunk-Drop Dupe")),
                 b -> {
-                    boolean active = b.getMessage().getString().contains("OFF");
-                    b.setMessage(Text.literal(getRGB("Ghost Mode: " + (active ? "ON" : "OFF"))));
+                    sendIllegalMessage("§f[Exploit] §7Chunk hatası tetikleniyor...");
+                    simulatePacketExploit(handled, 100);
                 }
-        ).dimensions(x, y + 25, width, height).build();
+        ).dimensions(x, y += 22, w, h).build();
 
-        // --- 3. AUTO-LOOT (Hızlı Toplama) ---
-        ButtonWidget lootBtn = ButtonWidget.builder(
-                Text.literal(getRGB("Auto-Loot")),
-                b -> {
-                    MinecraftClient.getInstance().player.sendMessage(Text.literal("§d[Yukile] §fYakındaki itemler çekiliyor..."), false);
-                }
-        ).dimensions(x, y + 50, width, height).build();
+        // --- 3. PACKET CRASHER (SUNUCU LAGLAMA) ---
+        ButtonWidget crashBtn = ButtonWidget.builder(
+                Text.literal(illegalRgb("» Server Desync (Lag)")),
+                b -> sendIllegalMessage("§4[UYARI] §fSunucu veri akışı yavaşlatıldı.")
+        ).dimensions(x, y += 22, w, h).build();
 
-        // Butonları ekrana bas
+        // --- 4. UUID SPOOFER (SAHTE KİMLİK) ---
+        ButtonWidget uuidBtn = ButtonWidget.builder(
+                Text.literal(illegalRgb("» UUID Spoofer: ON")),
+                b -> sendIllegalMessage("§b[Sistem] §fYeni kimlik tanımlandı.")
+        ).dimensions(x, y += 22, w, h).build();
+
+        // --- 5. NBT OVERFLOW (EŞYA BOZMA) ---
+        ButtonWidget nbtBtn = ButtonWidget.builder(
+                Text.literal(illegalRgb("» NBT Overflow")),
+                b -> simulatePacketExploit(handled, 20)
+        ).dimensions(x, y += 22, w, h).build();
+
         ((ScreenAccessor) screen).callAddDrawableChild(irpBtn);
-        ((ScreenAccessor) screen).callAddDrawableChild(ghostBtn);
-        ((ScreenAccessor) screen).callAddDrawableChild(lootBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(dupeBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(crashBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(uuidBtn);
+        ((ScreenAccessor) screen).callAddDrawableChild(nbtBtn);
     }
 
-    private void simulateIrpLogic(HandledScreen<?> screen) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
+    private void sendIllegalMessage(String msg) {
+        if (MinecraftClient.getInstance().player != null) {
+            MinecraftClient.getInstance().player.sendMessage(Text.literal("§d§l[ILLEGAL] " + msg), false);
+        }
+    }
 
-        // Öldüğünde itemleri geri getirme simülasyonu için hızlı paket döngüsü
+    private void simulatePacketExploit(HandledScreen<?> screen, int loops) {
+        MinecraftClient client = MinecraftClient.getInstance();
         new Thread(() -> {
             try {
                 int syncId = screen.getScreenHandler().syncId;
-                client.player.sendMessage(Text.literal("§d[İrp] §fÖlüm koordinatları taranıyor..."), false);
-                Thread.sleep(500);
-                
-                for (int i = 0; i < 9; i++) { // Hotbar'ı doldurma simülasyonu
-                    int slot = i;
+                for (int i = 0; i < loops; i++) {
                     client.execute(() -> 
-                        client.interactionManager.clickSlot(syncId, slot, 0, SlotActionType.PICKUP, client.player)
+                        client.interactionManager.clickSlot(syncId, 36, 0, SlotActionType.QUICK_MOVE, client.player)
                     );
-                    Thread.sleep(50);
+                    Thread.sleep(5); // Çok hızlı paket gönderimi
                 }
-                client.player.sendMessage(Text.literal("§b§l[BAŞARILI] §fEnvanteriniz geri yüklendi."), false);
+                sendIllegalMessage("§a§lİŞLEM TAMAMLANDI.");
             } catch (Exception ignored) {}
         }).start();
     }
