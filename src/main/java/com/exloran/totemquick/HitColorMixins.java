@@ -37,7 +37,9 @@ public abstract class HitColorMixins {
     @Inject(method = "init", at = @At("TAIL"))
     private void totemquick$addMapCopyButton(CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (!(Object) this instanceof Screen screen)) return;
+        // Java 17 uyumlu klasik instanceof kullanımı
+        if (!(Object) this instanceof Screen) return;
+        Screen screen = (Screen) (Object) this;
 
         int buttonWidth = 100;
         int buttonHeight = 20;
