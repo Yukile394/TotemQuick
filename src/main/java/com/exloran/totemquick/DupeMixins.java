@@ -3,7 +3,6 @@ package com.exloran.totemquick.mixin;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
@@ -21,32 +20,17 @@ public abstract class DupeMixins {
     private static float lastHp = -1;
     private static float anim = 0;
     private static float damageFlash = 0;
-
-    // 🔥 RENK PALETİ (HER VURUŞTA DEĞİŞİR)
     private static float colorSeed = 0;
+
     private static final Random RANDOM = new Random();
 
-    // ❤️ KALP TEXTURE
+    // ❤️ Kalp texture
     private static final Identifier HEART =
             new Identifier("totemquick", "textures/gui/heart.png");
 
-    // 🌈 Dinamik renk (palet değişimli)
-    private static int getDynamicColor(float t, float offset, float flash) {
-        float r = 0.5f + 0.5f * (float) Math.sin(t + offset + colorSeed);
-        float g = 0.5f + 0.5f * (float) Math.sin(t + offset + 2 + colorSeed);
-        float b = 0.5f + 0.5f * (float) Math.sin(t + offset + 4 + colorSeed);
-
-        r = Math.min(1, r + flash * 0.6f);
-        g = Math.max(0, g - flash * 0.4f);
-
-        return 0xFF000000
-                | ((int)(r * 255) << 16)
-                | ((int)(g * 255) << 8)
-                | (int)(b * 255);
-    }
-
     static {
-        HudRenderCallback.EVENT.register((DrawContext ctx, RenderTickCounter tick) -> {
+        HudRenderCallback.EVENT.register((DrawContext ctx, float tickDelta) -> {
+
             MinecraftClient mc = MinecraftClient.getInstance();
             if (mc.player == null || mc.world == null || mc.currentScreen != null) return;
 
@@ -65,15 +49,15 @@ public abstract class DupeMixins {
                 lastHp = hp;
             }
 
-            // 💥 VURUŞ ALGILANDI
+            // 💥 VURUŞ ALGILAMA → RENK PALETİ DEĞİŞİR
             if (hp < lastHp) {
                 damageFlash = 1.0f;
-                colorSeed = RANDOM.nextFloat() * 10f; // 🔥 RENK ŞİFT
+                colorSeed = RANDOM.nextFloat() * 10f;
             }
             lastHp = hp;
 
             smoothHp += (hp - smoothHp) * (hp < smoothHp ? 0.25f : 0.12f);
-            anim += 0.05f;
+            anim += tickDelta * 0.35f;
             damageFlash = Math.max(0, damageFlash - 0.05f);
 
             // 📐 PANEL
@@ -83,11 +67,10 @@ public abstract class DupeMixins {
             int h = 38;
             int s = 28;
 
-            // Arka plan (vurunca titrer gibi his verir)
             int shake = (int)(damageFlash * 3);
             ctx.fill(x + shake, y, x + w + shake, y + h, 0xDD000000);
 
-            // ❤️ KALP ÇİZİMİ (SKIN YOK)
+            // ❤️ SKIN YOK → KALP VAR
             int pulse = (int)(Math.sin(anim * 5) * 2);
             ctx.drawTexture(
                     HEART,
@@ -135,17 +118,32 @@ public abstract class DupeMixins {
                         barY,
                         barX + i + 1,
                         barY + barH,
-                        getDynamicColor(anim, i * 0.15f, damageFlash)
+                        getDynamicColor(anim, i * 0.15f, damageFlash, colorSeed)
                 );
             }
 
             // 🫀 KRİTİK CAN NABZI
             if (hp / max < 0.3f) {
-                float pulseEdge = (float)Math.abs(Math.sin(anim * 6));
-                int a = (int)(pulseEdge * 120);
+                float p = (float)Math.abs(Math.sin(anim * 6));
+                int a = (int)(p * 120);
                 ctx.fill(x, y, x + w, y + 1, (a << 24) | 0xFF0000);
                 ctx.fill(x, y + h - 1, x + w, y + h, (a << 24) | 0xFF0000);
             }
         });
     }
-                    }
+
+    // 🌈 Dinamik renk fonksiyonu
+    private static int getDynamicColor(float t, float o, float flash, float seed) {
+        float r = 0.5f + 0.5f * (float)Math.sin(t + o + seed);
+        float g = 0.5f + 0.5f * (float)Math.sin(t + o + 2 + seed);
+        float b = 0.5f + 0.5f * (float)Math.sin(t + o + 4 + seed);
+
+        r = Math.min(1, r + flash * 0.6f);
+        g = Math.max(0, g - flash * 0.4f);
+
+        return 0xFF000000
+                | ((int)(r * 255) << 16)
+                | ((int)(g * 255) << 8)
+                | (int)(b * 255);
+    }
+}
