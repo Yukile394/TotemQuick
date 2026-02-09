@@ -3,11 +3,11 @@ package com.exloran.totemquick.mixin;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Locale;
@@ -24,9 +24,9 @@ public abstract class DupeMixins {
 
     private static final Random RANDOM = new Random();
 
-    // ❤️ Kalp texture
+    // ❤️ 1.21 UYUMLU IDENTIFIER
     private static final Identifier HEART =
-            new Identifier("totemquick", "textures/gui/heart.png");
+            Identifier.of("totemquick", "textures/gui/heart.png");
 
     static {
         HudRenderCallback.EVENT.register((DrawContext ctx, float tickDelta) -> {
@@ -49,7 +49,7 @@ public abstract class DupeMixins {
                 lastHp = hp;
             }
 
-            // 💥 VURUŞ ALGILAMA → RENK PALETİ DEĞİŞİR
+            // 💥 VURUŞ → RENK PALETİ DEĞİŞİR
             if (hp < lastHp) {
                 damageFlash = 1.0f;
                 colorSeed = RANDOM.nextFloat() * 10f;
@@ -70,30 +70,15 @@ public abstract class DupeMixins {
             int shake = (int)(damageFlash * 3);
             ctx.fill(x + shake, y, x + w + shake, y + h, 0xDD000000);
 
-            // ❤️ SKIN YOK → KALP VAR
+            // ❤️ KALP (SKIN YOK)
             int pulse = (int)(Math.sin(anim * 5) * 2);
-            ctx.drawTexture(
-                    HEART,
-                    x + 6,
-                    y + 6 + pulse,
-                    0,
-                    0,
-                    s,
-                    s,
-                    s,
-                    s
-            );
+            ctx.drawTexture(HEART, x + 6, y + 6 + pulse, 0, 0, s, s, s, s);
 
             // 🔴 HASAR PARLAMASI
             if (damageFlash > 0) {
                 int a = (int)(damageFlash * 160);
-                ctx.fill(
-                        x + 6,
-                        y + 6,
-                        x + 6 + s,
-                        y + 6 + s,
-                        (a << 24) | 0xFF0000
-                );
+                ctx.fill(x + 6, y + 6, x + 6 + s, y + 6 + s,
+                        (a << 24) | 0xFF0000);
             }
 
             // ✍️ YAZILAR
@@ -113,26 +98,21 @@ public abstract class DupeMixins {
 
             int filled = (int)(barW * (Math.max(0, smoothHp) / max));
             for (int i = 0; i < filled; i++) {
-                ctx.fill(
-                        barX + i,
-                        barY,
-                        barX + i + 1,
-                        barY + barH,
-                        getDynamicColor(anim, i * 0.15f, damageFlash, colorSeed)
-                );
+                ctx.fill(barX + i, barY, barX + i + 1, barY + barH,
+                        getDynamicColor(anim, i * 0.15f, damageFlash, colorSeed));
             }
 
-            // 🫀 KRİTİK CAN NABZI
+            // 🫀 KRİTİK NABIZ
             if (hp / max < 0.3f) {
-                float p = (float)Math.abs(Math.sin(anim * 6));
-                int a = (int)(p * 120);
+                float pulseEdge = Math.abs((float)Math.sin(anim * 6));
+                int a = (int)(pulseEdge * 120);
                 ctx.fill(x, y, x + w, y + 1, (a << 24) | 0xFF0000);
                 ctx.fill(x, y + h - 1, x + w, y + h, (a << 24) | 0xFF0000);
             }
         });
     }
 
-    // 🌈 Dinamik renk fonksiyonu
+    // 🌈 RENK MOTORU
     private static int getDynamicColor(float t, float o, float flash, float seed) {
         float r = 0.5f + 0.5f * (float)Math.sin(t + o + seed);
         float g = 0.5f + 0.5f * (float)Math.sin(t + o + 2 + seed);
@@ -146,4 +126,4 @@ public abstract class DupeMixins {
                 | ((int)(g * 255) << 8)
                 | (int)(b * 255);
     }
-}
+                }
