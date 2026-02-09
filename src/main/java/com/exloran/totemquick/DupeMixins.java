@@ -6,6 +6,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.client.gui.screen.Screen;
@@ -23,8 +24,8 @@ public abstract class DupeMixins {
     private static float damageFlash = 0;
 
     private static int gradient(float t, float o) {
-        float r = 0.5f + 0.5f * (float)Math.sin(t + o);
-        float g = 0.6f + 0.4f * (float)Math.sin(t + o + 2);
+        float r = 0.6f + 0.4f * (float)Math.sin(t + o);
+        float g = 0.7f + 0.3f * (float)Math.sin(t + o + 2);
         float b = 0.2f + 0.2f * (float)Math.sin(t + o + 4);
         return 0xFF000000 | ((int)(r*255)<<16) | ((int)(g*255)<<8) | (int)(b*255);
     }
@@ -55,45 +56,46 @@ public abstract class DupeMixins {
             if (hp < lastHp) damageFlash = 1f;
             lastHp = hp;
 
-            float speed = hp < smoothHp ? 0.28f : 0.12f;
+            float speed = hp < smoothHp ? 0.30f : 0.12f;
             smoothHp += (hp - smoothHp) * speed;
 
             anim += 0.035f;
             damageFlash *= 0.85f;
 
+            // 📐 FOTOĞRAF ORANI – YATAY
             int x = 8;
             int y = 18;
-            int w = 140;
-            int h = 34;
+            int w = 150;
+            int h = 36;
 
-            // 🌫️ Gölge
-            ctx.fill(x, y, x + w, y + h, 0x88000000);
-            ctx.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0xFF0F0F0F);
+            // 🌫️ Arka plan
+            ctx.fill(x, y, x + w, y + h, 0xAA000000);
 
-            // 🧑 ENTITY HEAD (skin)
+            // 🧑 SKIN – SADECE YÜZ (8x8)
             Identifier skin = mc.getEntityRenderDispatcher()
                     .getRenderer(living)
                     .getTexture(living);
 
+            // yüz (8,8 → 16,16) = GÖZLER TAM ORTA
             ctx.drawTexture(
                     skin,
-                    x + 4, y + 5,
-                    8, 8,
-                    8, 8,
-                    32, 32
+                    x + 6, y + 6,
+                    8, 8,      // U V (face)
+                    8, 8,      // width height
+                    64, 64
             );
 
             // ✍️ Nick
             String name = living.getName().getString();
             ctx.drawTextWithShadow(mc.textRenderer, name, x + 26, y + 4, 0xFFFFFFFF);
 
-            // ❤️ Can yazısı
+            // ❤️ HP yazısı
             String hpText = String.format(Locale.US, "HP %.1f (%.1f)", smoothHp, max);
-            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + 26, y + 14, 0xFFCCCCCC);
+            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + 26, y + 15, 0xFFCCCCCC);
 
             // ❤️ Can barı
             int barX = x + 26;
-            int barY = y + h - 8;
+            int barY = y + h - 7;
             int barW = w - 32;
 
             ctx.fill(barX, barY, barX + barW, barY + 4, 0xFF2A2A2A);
@@ -105,15 +107,15 @@ public abstract class DupeMixins {
                         barY,
                         barX + i + 1,
                         barY + 4,
-                        gradient(anim, i * 0.12f)
+                        gradient(anim, i * 0.15f)
                 );
             }
 
             // 💥 Hasar flash
             if (damageFlash > 0.05f) {
-                int a = (int)(damageFlash * 100);
-                ctx.fill(x + 1, y + 1, x + w - 1, y + h - 1, (a << 24) | 0x990000);
+                int a = (int)(damageFlash * 90);
+                ctx.fill(x, y, x + w, y + h, (a << 24) | 0x990000);
             }
         });
     }
-}
+                                         }
