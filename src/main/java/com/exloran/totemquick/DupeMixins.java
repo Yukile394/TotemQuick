@@ -2,9 +2,10 @@ package com.exloran.totemquick.mixin;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,78 +15,59 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    private static int rgbTick = 0;
-    private static final String[] RGB = {"§d", "§5", "§b", "§c"}; // Pembe ve Mor ağırlıklı
-
-    private static String pinkRgb(String s) {
-        rgbTick = (rgbTick + 1) % RGB.length;
-        return RGB[rgbTick] + s;
-    }
-
-    @Inject(method = "init", at = @At("TAIL"))
-    private void addAggressiveUI(CallbackInfo ci) {
-        Screen screen = (Screen) (Object) this;
-        if (!(screen instanceof HandledScreen<?> handled)) return;
-
-        int x = 5; 
-        int y = 15;
-        int w = 135;
-        int h = 18;
-
-        // --- 1. İRP (DATA-SYNC RESTORE) ---
-        // Öldüğünde itemleri geri çekiyormuş gibi slotları tarar
-        ButtonWidget irpBtn = ButtonWidget.builder(
-                Text.literal(pinkRgb("» İrp (İtem İade)")),
-                b -> runExtremeLogic(handled, "IRP_RESTORE")
-        ).dimensions(x, y, w, h).build();
-
-        // --- 2. MULTI-SERVER CHUNK DUPE ---
-        // GMC gerektirmez, hayatta kalma modunda seri slot manipülasyonu yapar
-        ButtonWidget dupeBtn = ButtonWidget.builder(
-                Text.literal(pinkRgb("» Survival Chunk Dupe")),
-                b -> runExtremeLogic(handled, "CHUNK_DUPE")
-        ).dimensions(x, y += 20, w, h).build();
-
-        // --- 3. PACKET OBFUSCATOR (ANTİ-CHEAT BYPASS) ---
-        ButtonWidget bypassBtn = ButtonWidget.builder(
-                Text.literal(pinkRgb("» Bypass: AES-256")),
-                b -> {
-                    MinecraftClient.getInstance().player.sendMessage(Text.literal("§d[Yukile] §fPaketler şifrelendi. Sunucu sizi göremiyor."), false);
-                }
-        ).dimensions(x, y += 20, w, h).build();
-
-        // --- 4. ADMIN CRASHER (GHOST PACKET) ---
-        ButtonWidget crashBtn = ButtonWidget.builder(
-                Text.literal(pinkRgb("» Admin Ghost Lag")),
-                b -> runExtremeLogic(handled, "LAG_SPIKE")
-        ).dimensions(x, y += 20, w, h).build();
-
-        ((ScreenAccessor) screen).callAddDrawableChild(irpBtn);
-        ((ScreenAccessor) screen).callAddDrawableChild(dupeBtn);
-        ((ScreenAccessor) screen).callAddDrawableChild(bypassBtn);
-        ((ScreenAccessor) screen).callAddDrawableChild(crashBtn);
-    }
-
-    private void runExtremeLogic(HandledScreen<?> screen, String mode) {
+    @Inject(method = "render", at = @At("TAIL"))
+    private void renderTargetHealth(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
+        if (client.player == null || client.world == null) return;
 
-        new Thread(() -> {
-            try {
-                int syncId = screen.getScreenHandler().syncId;
-                client.player.sendMessage(Text.literal("§d§l[EXECUTOR] §f" + mode + " başlatıldı..."), false);
-                
-                // Agresif Paket Döngüsü (Slotlar arasında çok hızlı gidip gelir, videoda havalı durur)
-                for (int i = 0; i < 45; i++) {
-                    int slot = (i % 9) + 36; // Hotbar slotları arasında seri geçiş
-                    client.execute(() -> 
-                        client.interactionManager.clickSlot(syncId, slot, 0, SlotActionType.QUICK_MOVE, client.player)
-                    );
-                    Thread.sleep(15); // Sunucuyu düşürmeyecek ama lag sokacak hız
-                }
-                
-                client.player.sendMessage(Text.literal("§b§l[SUCCESS] §f" + mode + " tamamlandı."), false);
-            } catch (Exception ignored) {}
-        }).start();
+        HitResult hit = client.crosshairTarget;
+        if (hit == null || hit.getType() != HitResult.Type.ENTITY) return;
+
+        EntityHitResult entityHit = (EntityHitResult) hit;
+        if (!(entityHit.getEntity() instanceof LivingEntity living)) return;
+
+        float health = living.getHealth();
+        float maxHealth = living.getMaxHealth();
+
+        String name = living.getDisplayName().getString();
+        String hpText = String.format("§c❤ %.1f §7/ §c%.1f", health, maxHealth);
+
+        int screenWidth = client.getWindow().getScaledWidth();
+
+        int x = screenWidth / 2;
+        int y = 20; // Ekranın üst tarafı
+
+        // İsim
+        context.drawCenteredTextWithShadow(
+                client.textRenderer,
+                Text.literal("§d" + name),
+                x,
+                y,
+                0xFFFFFF
+        );
+
+        // Can yazısı
+        context.drawCenteredTextWithShadow(
+                client.textRenderer,
+                Text.literal(hpText),
+                x,
+                y + 10,
+                0xFFFFFF
+        );
+
+        // Basit can barı
+        int barWidth = 100;
+        int barHeight = 6;
+
+        int barX = x - barWidth / 2;
+        int barY = y + 24;
+
+        float ratio = Math.max(0.0f, Math.min(1.0f, health / maxHealth));
+        int filled = (int) (barWidth * ratio);
+
+        // Arka plan
+        context.fill(barX - 1, barY - 1, barX + barWidth + 1, barY + barHeight + 1, 0x90000000);
+        // Kırmızı can
+        context.fill(barX, barY, barX + filled, barY + barHeight, 0xFFFF5555);
     }
 }
