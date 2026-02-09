@@ -20,6 +20,9 @@ public abstract class DupeMixins {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.world == null) return;
 
+        // Eğer herhangi bir ekran açıksa (envanter, ayarlar vs) GÖSTERME
+        if (client.currentScreen != null) return;
+
         HitResult hit = client.crosshairTarget;
         if (hit == null || hit.getType() != HitResult.Type.ENTITY) return;
 
@@ -32,13 +35,12 @@ public abstract class DupeMixins {
         String name = living.getDisplayName().getString();
         String hpText = String.format("§c❤ %.1f §7/ §c%.1f", health, maxHealth);
 
-        int screenWidth = client.getWindow().getScaledWidth();
-
-        int x = screenWidth / 2;
-        int y = 20; // Ekranın üst tarafı
+        // Sol-üst ama biraz ortaya yakın
+        int x = 80;
+        int y = 20;
 
         // İsim
-        context.drawCenteredTextWithShadow(
+        context.drawTextWithShadow(
                 client.textRenderer,
                 Text.literal("§d" + name),
                 x,
@@ -47,7 +49,7 @@ public abstract class DupeMixins {
         );
 
         // Can yazısı
-        context.drawCenteredTextWithShadow(
+        context.drawTextWithShadow(
                 client.textRenderer,
                 Text.literal(hpText),
                 x,
@@ -55,11 +57,11 @@ public abstract class DupeMixins {
                 0xFFFFFF
         );
 
-        // Basit can barı
+        // Can barı
         int barWidth = 100;
         int barHeight = 6;
 
-        int barX = x - barWidth / 2;
+        int barX = x;
         int barY = y + 24;
 
         float ratio = Math.max(0.0f, Math.min(1.0f, health / maxHealth));
