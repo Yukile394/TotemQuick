@@ -1,15 +1,18 @@
 package com.exloran.totemquick.mixin;
 
+import com.exloran.totemquick.TotemQuickConfig;
+import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Locale;
@@ -17,21 +20,18 @@ import java.util.Locale;
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    private static float smoothHp = -1f;
-    private static float lastHp = -1f;
-    private static float anim = 0f;
-    private static float damageFlash = 0f;
-
-    private static int gradient(float t, float o) {
-        float r = 0.75f + 0.25f * (float)Math.sin(t + o);
-        float g = 0.75f + 0.25f * (float)Math.sin(t + o + 2);
-        float b = 0.25f + 0.25f * (float)Math.sin(t + o + 4);
-        return 0xFF000000 | ((int)(r * 255) << 16) | ((int)(g * 255) << 8) | (int)(b * 255);
-    }
+    private static float smoothHp = -1;
+    private static float lastHp = -1;
+    private static float anim = 0;
+    private static float damageFlash = 0;
+    private static float targetRot = 0;
 
     static {
         HudRenderCallback.EVENT.register((DrawContext ctx, RenderTickCounter tick) -> {
             MinecraftClient mc = MinecraftClient.getInstance();
+            TotemQuickConfig cfg = AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
+
+            if (!cfg.enabled) return;
             if (mc.player == null || mc.world == null || mc.currentScreen != null) return;
 
             HitResult hit = mc.crosshairTarget;
@@ -44,6 +44,7 @@ public abstract class DupeMixins {
             Entity ent = ehr.getEntity();
             if (!(ent instanceof LivingEntity living)) return;
 
+            // ================= HP =================
             float hp = living.getHealth();
             float max = living.getMaxHealth();
 
@@ -55,78 +56,79 @@ public abstract class DupeMixins {
             if (hp < lastHp) damageFlash = 1f;
             lastHp = hp;
 
-            float speed = hp < smoothHp ? 0.32f : 0.14f;
-            smoothHp += (hp - smoothHp) * speed;
-
+            smoothHp += (hp - smoothHp) * (hp < smoothHp ? 0.3f : 0.12f);
             anim += 0.04f;
             damageFlash *= 0.85f;
 
-            // 📐 KÜÇÜK – YATAY – YOL GİBİ
-            int x = 8;
-            int y = 18;
-            int w = 132;
-            int h = 30;
+            // ================= HUD =================
+            int x = 8 + cfg.hudOffsetX;
+            int y = 18 + cfg.hudOffsetY;
+            int w = (int)(150 * cfg.hudScale);
+            int h = (int)(36 * cfg.hudScale);
 
-            // 🌫️ Arka plan (oval hissi)
             ctx.fill(x, y, x + w, y + h, 0xAA000000);
-            ctx.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0xFF111111);
 
-            // 🧑 SKIN YÜZÜ – BÜYÜK (SOL)
+            // ================= SKIN FACE (BÜYÜK + SADECE KAFA) =================
             Identifier skin = mc.getEntityRenderDispatcher()
                     .getRenderer(living)
                     .getTexture(living);
 
-            // Face: (8,8) → (16,16)
-            ctx.drawTexture(
-                    skin,
-                    x + 5, y + 5,
+            int faceSize = (int)(24 * cfg.hudScale);
+
+            // FACE
+            ctx.drawTexture(skin,
+                    x + 6, y + 6,
                     8, 8,
-                    16, 16,
+                    faceSize, faceSize,
                     64, 64
             );
 
-            // ✍️ Nick (SAĞ ÜST)
+            // HAT / OVERLAY (şapka katmanı)
+            ctx.drawTexture(skin,
+                    x + 6, y + 6,
+                    40, 8,
+                    faceSize, faceSize,
+                    64, 64
+            );
+
+            // ================= TEXT =================
             String name = living.getName().getString();
-            ctx.drawTextWithShadow(
-                    mc.textRenderer,
-                    name,
-                    x + 28,
-                    y + 4,
-                    0xFFFFFFFF
-            );
+            String hpText = String.format(Locale.US, "%.1f / %.1f ❤", smoothHp, max);
 
-            // ❤️ HP yazısı (nick altı)
-            String hpText = String.format(Locale.US, "%.0f / %.0f", smoothHp, max);
-            ctx.drawTextWithShadow(
-                    mc.textRenderer,
-                    hpText,
-                    x + 28,
-                    y + 14,
-                    0xFFCCCCCC
-            );
+            ctx.drawTextWithShadow(mc.textRenderer, name, x + 36, y + 6, 0xFFFFFFFF);
+            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + 36, y + 18, 0xFFDDDDDD);
 
-            // ❤️ CAN BAR (ALTA YAYIK – YOL GİBİ)
-            int barX = x + 28;
+            // ================= HP BAR =================
+            int barX = x + 36;
             int barY = y + h - 6;
-            int barW = w - 34;
+            int barW = w - 44;
 
-            ctx.fill(barX, barY, barX + barW, barY + 3, 0xFF2A2A2A);
+            ctx.fill(barX, barY, barX + barW, barY + 4, 0xFF222222);
 
             int filled = (int)(barW * (smoothHp / max));
-            for (int i = 0; i < filled; i++) {
-                ctx.fill(
-                        barX + i,
-                        barY,
-                        barX + i + 1,
-                        barY + 3,
-                        gradient(anim, i * 0.18f)
-                );
+            int animColor = TotemQuickConfig.parseHitColorToRGBA(cfg.healthAnimColor, 100);
+
+            ctx.fill(barX, barY, barX + filled, barY + 4, animColor);
+
+            if (damageFlash > 0.05f) {
+                int a = (int)(damageFlash * 90);
+                ctx.fill(x, y, x + w, y + h, (a << 24) | 0x660000);
             }
 
-            // 💥 Hasar flash (çok hafif)
-            if (damageFlash > 0.05f) {
-                int a = (int)(damageFlash * 70);
-                ctx.fill(x, y, x + w, y + h, (a << 24) | 0x880000);
+            // ================= TARGET 🍭 =================
+            if (cfg.targetEnabled) {
+                Vec3d center = living.getBoundingBox().getCenter();
+
+                targetRot += cfg.targetRotateSpeed;
+                if (targetRot > 360) targetRot = 0;
+
+                mc.textRenderer.drawWithShadow(
+                        ctx.getMatrices(),
+                        cfg.targetSymbol,
+                        (float)(center.x),
+                        (float)(center.y + living.getHeight() / 2),
+                        TotemQuickConfig.parseHitColorToRGBA(cfg.targetColor, cfg.targetAlpha)
+                );
             }
         });
     }
