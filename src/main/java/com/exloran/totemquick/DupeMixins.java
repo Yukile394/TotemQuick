@@ -9,6 +9,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Locale;
@@ -16,15 +17,15 @@ import java.util.Locale;
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    private static float smoothHealth = -1f;
-    private static float lastHealth = -1f;
-    private static float anim = 0f;
-    private static float damageFlash = 0f;
+    private static float smoothHp = -1;
+    private static float lastHp = -1;
+    private static float anim = 0;
+    private static float damageFlash = 0;
 
-    private static int waveColor(float t, float offset) {
-        float r = 0.55f + 0.45f * (float)Math.sin(t + offset);
-        float g = 0.55f + 0.45f * (float)Math.sin(t + offset + 2.2);
-        float b = 0.55f + 0.45f * (float)Math.sin(t + offset + 4.4);
+    private static int gradient(float t, float o) {
+        float r = 0.5f + 0.5f * (float)Math.sin(t + o);
+        float g = 0.6f + 0.4f * (float)Math.sin(t + o + 2);
+        float b = 0.2f + 0.2f * (float)Math.sin(t + o + 4);
         return 0xFF000000 | ((int)(r*255)<<16) | ((int)(g*255)<<8) | (int)(b*255);
     }
 
@@ -35,8 +36,8 @@ public abstract class DupeMixins {
 
             HitResult hit = mc.crosshairTarget;
             if (!(hit instanceof EntityHitResult ehr)) {
-                smoothHealth = -1;
-                lastHealth = -1;
+                smoothHp = -1;
+                lastHp = -1;
                 return;
             }
 
@@ -46,76 +47,73 @@ public abstract class DupeMixins {
             float hp = living.getHealth();
             float max = living.getMaxHealth();
 
-            if (smoothHealth < 0) {
-                smoothHealth = hp;
-                lastHealth = hp;
+            if (smoothHp < 0) {
+                smoothHp = hp;
+                lastHp = hp;
             }
 
-            // 🩸 Hasar algılama
-            if (hp < lastHealth) {
-                damageFlash = 1f; // vurulunca flash
-            }
-            lastHealth = hp;
+            if (hp < lastHp) damageFlash = 1f;
+            lastHp = hp;
 
-            // 🎯 YÖNLÜ animasyon (azalırken geri, artarken ileri)
-            float speed = hp < smoothHealth ? 0.25f : 0.12f;
-            smoothHealth += (hp - smoothHealth) * speed;
+            float speed = hp < smoothHp ? 0.28f : 0.12f;
+            smoothHp += (hp - smoothHp) * speed;
 
             anim += 0.035f;
             damageFlash *= 0.85f;
 
-            // 📐 Mini boyutlar
-            int w = 96;
-            int h = 28;
             int x = 8;
             int y = 18;
+            int w = 140;
+            int h = 34;
 
             // 🌫️ Gölge
             ctx.fill(x, y, x + w, y + h, 0x88000000);
+            ctx.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0xFF0F0F0F);
 
-            // 🖤 Panel
-            ctx.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0xFF101010);
+            // 🧑 ENTITY HEAD (skin)
+            Identifier skin = mc.getEntityRenderDispatcher()
+                    .getRenderer(living)
+                    .getTexture(living);
 
-            // ❤️ İnce can barı
-            int barY = y + h - 7;
-            int innerW = w - 6;
+            ctx.drawTexture(
+                    skin,
+                    x + 4, y + 5,
+                    8, 8,
+                    8, 8,
+                    32, 32
+            );
 
-            ctx.fill(x + 3, barY, x + w - 3, barY + 4, 0xFF2A2A2A);
+            // ✍️ Nick
+            String name = living.getName().getString();
+            ctx.drawTextWithShadow(mc.textRenderer, name, x + 26, y + 4, 0xFFFFFFFF);
 
-            int filled = (int)(innerW * (smoothHealth / max));
+            // ❤️ Can yazısı
+            String hpText = String.format(Locale.US, "HP %.1f (%.1f)", smoothHp, max);
+            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + 26, y + 14, 0xFFCCCCCC);
+
+            // ❤️ Can barı
+            int barX = x + 26;
+            int barY = y + h - 8;
+            int barW = w - 32;
+
+            ctx.fill(barX, barY, barX + barW, barY + 4, 0xFF2A2A2A);
+
+            int filled = (int)(barW * (smoothHp / max));
             for (int i = 0; i < filled; i++) {
                 ctx.fill(
-                        x + 3 + i,
+                        barX + i,
                         barY,
-                        x + 4 + i,
+                        barX + i + 1,
                         barY + 4,
-                        waveColor(anim, i * 0.15f)
+                        gradient(anim, i * 0.12f)
                 );
             }
 
-            // 💥 Hasar flash overlay
+            // 💥 Hasar flash
             if (damageFlash > 0.05f) {
-                int alpha = (int)(damageFlash * 120);
-                ctx.fill(x + 1, y + 1, x + w - 1, y + h - 1, (alpha << 24) | 0x880000);
+                int a = (int)(damageFlash * 100);
+                ctx.fill(x + 1, y + 1, x + w - 1, y + h - 1, (a << 24) | 0x990000);
             }
-
-            // ⚠️ Düşük can nabız
-            if (smoothHealth / max < 0.25f) {
-                float pulse = 0.5f + 0.5f * (float)Math.sin(anim * 3);
-                int a = (int)(pulse * 60);
-                ctx.fill(x + 1, y + 1, x + w - 1, y + h - 1, (a << 24) | 0xFF0000);
-            }
-
-            // 💖 Can yazısı – TAM ORTA
-            String hpText = String.format(Locale.US, "%.0f/%.0f", smoothHealth, max);
-            int tw = mc.textRenderer.getWidth(hpText);
-            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + w/2 - tw/2, y + 7, 0xFFFFFFFF);
-
-            // 📏 Mesafe (sağ alt – mini)
-            double dist = mc.player.distanceTo(living);
-            String d = String.format(Locale.US, "%.1fm", dist);
-            int dw = mc.textRenderer.getWidth(d);
-            ctx.drawTextWithShadow(mc.textRenderer, d, x + w - dw - 4, y + 2, 0xFFBBBBBB);
         });
     }
 }
