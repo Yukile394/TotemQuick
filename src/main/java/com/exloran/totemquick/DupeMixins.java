@@ -17,7 +17,6 @@ public abstract class DupeMixins {
 
     private static float hue = 0.0f;
 
-    // Basit HSB -> RGB (java.awt kullanmadan)
     private int getRgbColor() {
         hue += 0.002f;
         if (hue > 1.0f) hue = 0.0f;
@@ -45,10 +44,15 @@ public abstract class DupeMixins {
         return 0xFF000000 | (ri << 16) | (gi << 8) | bi;
     }
 
-    @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;F)V", at = @At("TAIL"))
+    @Inject(method = "render", at = @At("TAIL"))
     private void renderTargetHealth(DrawContext context, float tickDelta, CallbackInfo ci) {
+        if (context == null) return;
+
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || client.world == null) return;
+        if (client == null || client.player == null || client.world == null) return;
+
+        // Eğer bir GUI açıksa (envanter vs) gösterme
+        if (client.currentScreen != null) return;
 
         HitResult hit = client.crosshairTarget;
         if (hit == null || hit.getType() != HitResult.Type.ENTITY) return;
@@ -62,13 +66,11 @@ public abstract class DupeMixins {
         String name = living.getDisplayName().getString();
         String hpText = String.format("❤ %.1f / %.1f", health, maxHealth);
 
-        // Sol-üst, biraz ortaya yakın
         int x = 80;
         int y = 20;
 
         int color = getRgbColor();
 
-        // İsim
         context.drawTextWithShadow(
                 client.textRenderer,
                 Text.literal(name),
@@ -77,7 +79,6 @@ public abstract class DupeMixins {
                 color
         );
 
-        // Can yazısı
         context.drawTextWithShadow(
                 client.textRenderer,
                 Text.literal(hpText),
@@ -86,7 +87,6 @@ public abstract class DupeMixins {
                 color
         );
 
-        // Can barı
         int barWidth = 100;
         int barHeight = 6;
 
@@ -96,9 +96,7 @@ public abstract class DupeMixins {
         float ratio = Math.max(0.0f, Math.min(1.0f, health / maxHealth));
         int filled = (int) (barWidth * ratio);
 
-        // Arka plan
         context.fill(barX - 1, barY - 1, barX + barWidth + 1, barY + barHeight + 1, 0x90000000);
-        // RGB bar
         context.fill(barX, barY, barX + filled, barY + barHeight, color);
     }
 }
