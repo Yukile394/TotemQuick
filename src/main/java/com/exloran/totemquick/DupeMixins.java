@@ -6,11 +6,11 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Locale;
@@ -23,11 +23,14 @@ public abstract class DupeMixins {
     private static float anim = 0;
     private static float damageFlash = 0;
 
+    // ✯ animasyonu
+    private static float starRot = 0f;
+
     private static int gradient(float t, float o) {
         float r = 0.6f + 0.4f * (float)Math.sin(t + o);
-        float g = 0.7f + 0.3f * (float)Math.sin(t + o + 2);
-        float b = 0.2f + 0.2f * (float)Math.sin(t + o + 4);
-        return 0xFF000000 | ((int)(r*255)<<16) | ((int)(g*255)<<8) | (int)(b*255);
+        float g = 0.8f + 0.2f * (float)Math.sin(t + o + 2);
+        float b = 0.2f;
+        return 0xFF000000 | ((int)(r * 255) << 16) | ((int)(g * 255) << 8) | (int)(b * 255);
     }
 
     static {
@@ -61,42 +64,43 @@ public abstract class DupeMixins {
 
             anim += 0.035f;
             damageFlash *= 0.85f;
+            starRot += 0.02f; // ✯ yavaş dönüş
 
-            // 📐 FOTOĞRAF ORANI – YATAY
+            // 📐 HUD konumu
             int x = 8;
             int y = 18;
-            int w = 150;
-            int h = 36;
+            int w = 160;
+            int h = 40;
 
-            // 🌫️ Arka plan
+            // 🌫️ Arkaplan
             ctx.fill(x, y, x + w, y + h, 0xAA000000);
 
-            // 🧑 SKIN – SADECE YÜZ (8x8)
+            // 🧑 SKIN – SADECE YÜZ (BÜYÜK)
             Identifier skin = mc.getEntityRenderDispatcher()
                     .getRenderer(living)
                     .getTexture(living);
 
-            // yüz (8,8 → 16,16) = GÖZLER TAM ORTA
+            // Face: (8,8) → (16,16)
             ctx.drawTexture(
                     skin,
                     x + 6, y + 6,
-                    8, 8,      // U V (face)
-                    8, 8,      // width height
+                    8, 8,
+                    16, 16,
                     64, 64
             );
 
             // ✍️ Nick
             String name = living.getName().getString();
-            ctx.drawTextWithShadow(mc.textRenderer, name, x + 26, y + 4, 0xFFFFFFFF);
+            ctx.drawTextWithShadow(mc.textRenderer, name, x + 30, y + 4, 0xFFFFFFFF);
 
             // ❤️ HP yazısı
-            String hpText = String.format(Locale.US, "HP %.1f (%.1f)", smoothHp, max);
-            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + 26, y + 15, 0xFFCCCCCC);
+            String hpText = String.format(Locale.US, "HP %.1f / %.1f", smoothHp, max);
+            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + 30, y + 16, 0xFFCCCCCC);
 
             // ❤️ Can barı
-            int barX = x + 26;
-            int barY = y + h - 7;
-            int barW = w - 32;
+            int barX = x + 30;
+            int barY = y + h - 8;
+            int barW = w - 36;
 
             ctx.fill(barX, barY, barX + barW, barY + 4, 0xFF2A2A2A);
 
@@ -116,6 +120,32 @@ public abstract class DupeMixins {
                 int a = (int)(damageFlash * 90);
                 ctx.fill(x, y, x + w, y + h, (a << 24) | 0x990000);
             }
+
+            // ============================
+            // ✯ HITBOX ORTASI HEDEF
+            // ============================
+            Vec3d pos = living.getPos().add(0, living.getHeight() * 0.5, 0);
+            Vec3d screen = mc.gameRenderer.getCamera().getProjection().project(pos);
+
+            if (!Double.isNaN(screen.x)) {
+                int cx = (int)(mc.getWindow().getScaledWidth() / 2f);
+                int cy = (int)(mc.getWindow().getScaledHeight() / 2f);
+
+                ctx.getMatrices().push();
+                ctx.getMatrices().translate(cx, cy, 0);
+                ctx.getMatrices().multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Z.rotation(starRot));
+                ctx.getMatrices().scale(1.2f, 1.2f, 1f);
+
+                ctx.drawTextWithShadow(
+                        mc.textRenderer,
+                        "✯",
+                        -3,
+                        -4,
+                        0xFF00FF66
+                );
+
+                ctx.getMatrices().pop();
+            }
         });
     }
-                         }
+                }
