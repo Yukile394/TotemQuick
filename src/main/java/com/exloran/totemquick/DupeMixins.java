@@ -17,16 +17,35 @@ public abstract class DupeMixins {
 
     private static float hue = 0.0f;
 
-    private int rgbColor() {
-        // Hue 0..1 arası döner
+    // Basit HSB -> RGB (java.awt kullanmadan)
+    private int getRgbColor() {
         hue += 0.002f;
         if (hue > 1.0f) hue = 0.0f;
 
-        int rgb = java.awt.Color.HSBtoRGB(hue, 1.0f, 1.0f);
-        return 0xFF000000 | (rgb & 0x00FFFFFF); // alpha ekle
+        float h = hue * 6.0f;
+        int i = (int) h;
+        float f = h - i;
+        float q = 1.0f - f;
+
+        float r = 0, g = 0, b = 0;
+
+        switch (i % 6) {
+            case 0 -> { r = 1; g = f; b = 0; }
+            case 1 -> { r = q; g = 1; b = 0; }
+            case 2 -> { r = 0; g = 1; b = f; }
+            case 3 -> { r = 0; g = q; b = 1; }
+            case 4 -> { r = f; g = 0; b = 1; }
+            case 5 -> { r = 1; g = 0; b = q; }
+        }
+
+        int ri = (int)(r * 255);
+        int gi = (int)(g * 255);
+        int bi = (int)(b * 255);
+
+        return 0xFF000000 | (ri << 16) | (gi << 8) | bi;
     }
 
-    @Inject(method = "render", at = @At("TAIL"))
+    @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;F)V", at = @At("TAIL"))
     private void renderTargetHealth(DrawContext context, float tickDelta, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.world == null) return;
@@ -47,9 +66,9 @@ public abstract class DupeMixins {
         int x = 80;
         int y = 20;
 
-        int color = rgbColor();
+        int color = getRgbColor();
 
-        // İsim (RGB animasyonlu)
+        // İsim
         context.drawTextWithShadow(
                 client.textRenderer,
                 Text.literal(name),
@@ -79,7 +98,7 @@ public abstract class DupeMixins {
 
         // Arka plan
         context.fill(barX - 1, barY - 1, barX + barWidth + 1, barY + barHeight + 1, 0x90000000);
-        // RGB animasyonlu bar
+        // RGB bar
         context.fill(barX, barY, barX + filled, barY + barHeight, color);
     }
 }
