@@ -18,7 +18,7 @@ public class TotemQuickConfig implements ConfigData {
     // Totem yok uyarı rengi (chat için)
     public String uyarirengi = "red";
 
-    /* ================== HIT EFFECT (YENİ) ================== */
+    /* ================== HIT EFFECT ================== */
 
     // Vurunca ekran flash aktif mi
     public boolean hitFlashEnabled = true;
@@ -29,27 +29,6 @@ public class TotemQuickConfig implements ConfigData {
 
     // Hit flash alpha (0-100)
     public float hitFlashAlpha = 35.0f;
-
-    /* ================== HITBOX ORTA SİMGESİ ================== */
-
-    // ✯ simgesi açık mı
-    public boolean centerSymbolEnabled = true;
-
-    // Sembol (✯, 🍭, ★ vb.)
-    public String centerSymbol = "✯";
-
-    // Sembol rengi (HEX)
-    public String centerSymbolColor = "#00FF6A";
-
-    // Sembol boyutu
-    public float centerSymbolScale = 1.2f;
-
-    // Dönme hızı (küçük = yavaş)
-    public float centerSymbolRotateSpeed = 0.015f;
-
-    // Konum offset (hitbox ortasına göre)
-    public int centerOffsetX = 0;
-    public int centerOffsetY = 0;
 
     /* -------------------------------------------------- */
     /* CHAT RENK PARSE (AYNI KALDI) */
