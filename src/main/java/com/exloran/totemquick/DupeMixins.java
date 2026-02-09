@@ -11,15 +11,17 @@ import net.minecraft.util.hit.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import net.minecraft.client.gui.screen.Screen;
 
+import java.util.Locale;
+
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
     private static float smoothHealth = -1;
+    private static float hue = 0f;
 
-    private static int getHealthColor(float pct) {
-        if (pct > 0.66f) return 0xFF55FF55; // yeşil
-        if (pct > 0.33f) return 0xFFFFAA00; // turuncu
-        return 0xFFFF5555; // kırmızı
+    private static int hsvToRgb(float h, float s, float v) {
+        int rgb = java.awt.Color.HSBtoRGB(h, s, v);
+        return 0xFF000000 | (rgb & 0x00FFFFFF);
     }
 
     static {
@@ -28,7 +30,7 @@ public abstract class DupeMixins {
             public void onHudRender(DrawContext context, RenderTickCounter tickCounter) {
                 MinecraftClient client = MinecraftClient.getInstance();
                 if (client.player == null || client.world == null) return;
-                if (client.currentScreen != null) return; // envanter açıkken gösterme
+                if (client.currentScreen != null) return;
 
                 HitResult hit = client.crosshairTarget;
                 if (hit == null || hit.getType() != HitResult.Type.ENTITY) {
@@ -43,35 +45,43 @@ public abstract class DupeMixins {
                 float maxHealth = living.getMaxHealth();
 
                 if (smoothHealth < 0) smoothHealth = health;
-                smoothHealth += (health - smoothHealth) * 0.1f; // yumuşatma
+                smoothHealth += (health - smoothHealth) * 0.12f;
+
+                // RGB renk kaydırma
+                hue += 0.002f;
+                if (hue > 1f) hue = 0f;
+                int rgbColor = hsvToRgb(hue, 0.9f, 1f);
 
                 int x = 10;
                 int y = 20;
 
-                int barWidth = 120;
-                int barHeight = 10;
+                int barWidth = 140;
+                int barHeight = 12;
 
-                // Arkaplan panel
-                context.fill(x - 2, y - 2, x + barWidth + 2, y + barHeight + 22, 0xAA000000);
+                // Panel gölgesi
+                context.fill(x - 4, y - 4, x + barWidth + 4, y + barHeight + 28, 0x66000000);
+                // Panel arkaplan
+                context.fill(x - 2, y - 2, x + barWidth + 2, y + barHeight + 26, 0xAA0F0F0F);
 
                 // Bar arkaplanı
                 context.fill(x, y, x + barWidth, y + barHeight, 0xFF222222);
 
                 int filled = (int) (barWidth * (smoothHealth / maxHealth));
-                int color = getHealthColor(smoothHealth / maxHealth);
 
-                // Can barı
-                context.fill(x, y, x + filled, y + barHeight, color);
+                // RGB can barı
+                context.fill(x, y, x + filled, y + barHeight, rgbColor);
 
                 String name = living.getName().getString();
-                String hpText = String.format("%.1f / %.1f ❤", smoothHealth, maxHealth);
 
-                // İsim
-                context.drawTextWithShadow(client.textRenderer, name, x, y + 12, 0xFFFFFFFF);
+                // Locale.US ile -> Arapça rakam sorunu biter
+                String hpText = String.format(Locale.US, "%.1f / %.1f ❤", smoothHealth, maxHealth);
 
-                // Can yazısı (sağa yaslı)
+                // İsim (üstte)
+                context.drawTextWithShadow(client.textRenderer, name, x, y + barHeight + 2, 0xFFFFFFFF);
+
+                // Can yazısı (sağa)
                 int hpWidth = client.textRenderer.getWidth(hpText);
-                context.drawTextWithShadow(client.textRenderer, hpText, x + barWidth - hpWidth, y + 12, 0xFFFF55FF);
+                context.drawTextWithShadow(client.textRenderer, hpText, x + barWidth - hpWidth, y + barHeight + 2, 0xFFFFFFFF);
             }
         });
     }
