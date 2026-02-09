@@ -4,9 +4,9 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -45,32 +45,30 @@ public abstract class DupeMixins {
     }
 
     @Inject(method = "render", at = @At("TAIL"))
-    private void renderTargetHealth(DrawContext context, float tickDelta, CallbackInfo ci) {
-        if (context == null) return;
-
+    private void renderTargetHud(DrawContext context, float tickDelta, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.player == null || client.world == null) return;
 
-        // Eğer bir GUI açıksa (envanter vs) gösterme
+        // GUI açıksa gösterme (envanter, esc vs)
         if (client.currentScreen != null) return;
 
         HitResult hit = client.crosshairTarget;
         if (hit == null || hit.getType() != HitResult.Type.ENTITY) return;
 
-        EntityHitResult entityHit = (EntityHitResult) hit;
-        if (!(entityHit.getEntity() instanceof LivingEntity living)) return;
+        EntityHitResult ehr = (EntityHitResult) hit;
+        if (!(ehr.getEntity() instanceof LivingEntity living)) return;
 
         float health = living.getHealth();
         float maxHealth = living.getMaxHealth();
 
         String name = living.getDisplayName().getString();
-        String hpText = String.format("❤ %.1f / %.1f", health, maxHealth);
 
         int x = 80;
         int y = 20;
 
         int color = getRgbColor();
 
+        // İsim
         context.drawTextWithShadow(
                 client.textRenderer,
                 Text.literal(name),
@@ -79,24 +77,28 @@ public abstract class DupeMixins {
                 color
         );
 
+        // HP text
+        String hpText = String.format("❤ %.1f / %.1f", health, maxHealth);
         context.drawTextWithShadow(
                 client.textRenderer,
                 Text.literal(hpText),
                 x,
                 y + 10,
-                color
+                0xFFFFFFFF
         );
 
+        // Bar
         int barWidth = 100;
         int barHeight = 6;
-
         int barX = x;
         int barY = y + 24;
 
         float ratio = Math.max(0.0f, Math.min(1.0f, health / maxHealth));
         int filled = (int) (barWidth * ratio);
 
+        // Arkaplan
         context.fill(barX - 1, barY - 1, barX + barWidth + 1, barY + barHeight + 1, 0x90000000);
+        // RGB dolu kısım
         context.fill(barX, barY, barX + filled, barY + barHeight, color);
     }
 }
