@@ -20,13 +20,14 @@ public abstract class DupeMixins {
     private static float lastHp = -1;
     private static float anim = 0;
     private static float damageFlash = 0;
-    private static float heartBeat = 0;
 
-    private static int gradient(float t, float o) {
-        // Fotoğraftaki o meşhur parlak sarı-yeşil geçişi
-        float r = 0.4f + 0.4f * (float)Math.sin(t + o);
-        float g = 0.8f + 0.2f * (float)Math.sin(t + o + 1.5f);
-        return 0xFF000000 | ((int)(r*255)<<16) | ((int)(g*255)<<8) | 50;
+    // Fotoğraftaki o keskin sarıdan yeşile geçen neon bar
+    private static int getBarColor(float t, float offset) {
+        float f = (float) Math.sin(t + offset * 0.2f);
+        int r = (int) (180 + 75 * f); // Sarı tonu için kırmızı yüksek
+        int g = 255;                  // Yeşil her zaman ful
+        int b = 30;                   // Hafif sıcaklık
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
 
     static {
@@ -35,86 +36,79 @@ public abstract class DupeMixins {
             if (mc.player == null || mc.world == null || mc.currentScreen != null) return;
 
             HitResult hit = mc.crosshairTarget;
-            if (!(hit instanceof EntityHitResult ehr)) {
+            if (!(hit instanceof EntityHitResult ehr) || !(ehr.getEntity() instanceof LivingEntity living)) {
                 smoothHp = -1;
                 lastHp = -1;
                 return;
             }
-
-            Entity ent = ehr.getEntity();
-            if (!(ent instanceof LivingEntity living)) return;
 
             float hp = living.getHealth();
             float max = living.getMaxHealth();
 
             if (smoothHp < 0) { smoothHp = hp; lastHp = hp; }
 
-            // 💥 HASAR TESPİTİ
-            if (hp < lastHp) {
-                damageFlash = 1.5f; // Skini kırmızıya boyayacak güç
-                heartBeat = 1.0f;   // Can gidince bar titrer
-            }
+            // 💥 HASAR TEPKİSİ
+            if (hp < lastHp) damageFlash = 1.0f;
             lastHp = hp;
 
-            // Yumuşatma animasyonları
-            smoothHp += (hp - smoothHp) * (hp < smoothHp ? 0.25f : 0.12f);
-            anim += 0.05f;
-            damageFlash *= 0.85f;
-            heartBeat *= 0.9f;
+            // Animasyon değerleri
+            smoothHp += (hp - smoothHp) * (hp < smoothHp ? 0.22f : 0.10f);
+            anim += 0.06f;
+            damageFlash = Math.max(0, damageFlash - 0.05f);
 
-            // --- PANEL TASARIMI (SIKI VE ŞIK) ---
-            int x = 10; 
-            int y = 10;
-            int w = 155; 
-            int h = 40;
-            int s = 30; // Skin boyutu
+            // --- 📐 GEOMETRİ (SIKI VE TAM KARE) ---
+            int x = 8;
+            int y = 8;
+            int w = 150;
+            int h = 34; // Daha dar ve kompakt yapı
+            int s = 26; // Skin yüzü boyutu (Daha fit)
 
-            // Arka Plan (Modern yarı saydam siyah)
-            ctx.fill(x, y, x + w, y + h, 0xCC000000);
-            ctx.fill(x, y, x + w, y + 1, 0x44FFFFFF); // Üst ince çizgi detayı
-
-            // 🧑 SKIN (TAM YÜZ VE HATASIZ KATMAN)
+            // 🌫️ Arka Plan (Görseldeki gibi mat siyah)
+            ctx.fill(x, y, x + w, y + h, 0xDD000000);
+            
+            // 🧑 SKIN (HATASIZ VE NET YÜZ)
             Identifier skin = mc.getEntityRenderDispatcher().getRenderer(living).getTexture(living);
             
-            // Ana Yüz (8, 8 koordinatından 8x8 alan)
-            ctx.drawTexture(skin, x + 5, y + 5, 8, 8, s, s, 64, 64);
-            // Dış Katman/Kask (40, 8 koordinatından 8x8 alan) - Tam hizalama
-            ctx.drawTexture(skin, x + 5, y + 5, 40, 8, s, s, 64, 64);
+            // İç Yüz (Netleştirilmiş 8x8 piksellik alan)
+            ctx.drawTexture(skin, x + 4, y + 4, 8, 8, s, s, 64, 64);
+            // Dış Katman (Overlay) - Saç ve Aksesuarlar
+            ctx.drawTexture(skin, x + 4, y + 4, 40, 8, s, s, 64, 64);
 
-            // 🔴 DAMAGE FLASH (Sadece skin üzerine vuran kırmızı efekt)
-            if (damageFlash > 0.1f) {
-                int rA = (int)(Math.min(damageFlash, 1.0f) * 180);
-                ctx.fill(x + 5, y + 5, x + 5 + s, y + 5 + s, (rA << 24) | 0xFF0000);
+            // 🟥 SKIN HASAR FLASH (Sadece yüze vuran kırmızı vuruş hissi)
+            if (damageFlash > 0) {
+                int alpha = (int) (damageFlash * 160);
+                ctx.fill(x + 4, y + 4, x + 4 + s, y + 4 + s, (alpha << 24) | 0xFF0000);
             }
 
-            // ✍️ BİLGİLER
-            String name = living.getName().getString().toLowerCase();
-            ctx.drawTextWithShadow(mc.textRenderer, name, x + 40, y + 5, 0xFFFFFFFF);
+            // ✍️ METİNLER
+            String name = living.getName().getString();
+            ctx.drawTextWithShadow(mc.textRenderer, name, x + s + 10, y + 4, 0xFFFFFFFF);
 
-            // Şaşırtıcı Detay: Can %25'in altındaysa yazı kırmızı yanıp söner (KRİTİK DURUM)
-            int hpColor = (hp / max < 0.25f && (int)(anim * 5) % 2 == 0) ? 0xFFFF0000 : 0xFFAAAAAA;
-            String hpInfo = String.format(Locale.US, "hp: %.1f / %.0f", hp, max);
-            ctx.drawTextWithShadow(mc.textRenderer, hpInfo, x + 40, y + 15, hpColor);
+            // HP Yazısı (Görseldeki gibi ufak ve gri tonlarda)
+            String hpText = String.format(Locale.US, "hp: %.1f / %.0f", hp, max);
+            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + s + 10, y + 14, 0xFFBBBBBB);
 
-            // ❤️ CAN BARI (Dinamik sarsıntılı)
-            int barX = x + 40;
-            int barY = y + 27;
-            int barW = w - 48;
-            int barH = 7;
-            
-            // Sarsıntı efekti (Hasar alınınca bar titrer)
-            int shake = (int)(Math.sin(anim * 20) * (heartBeat * 3));
-            
-            ctx.fill(barX, barY, barX + barW, barY + barH, 0xFF222222); // Bar arka plan
+            // 🔋 BAR YAPISI
+            int barX = x + s + 10;
+            int barY = y + 24;
+            int barW = w - (s + 16);
+            int barH = 6;
 
-            int filled = (int)(barW * (Math.max(0, smoothHp) / max));
+            // Boş Bar
+            ctx.fill(barX, barY, barX + barW, barY + barH, 0xFF111111);
+
+            // Dolu Bar (Yumuşak geçişli)
+            int filled = (int) (barW * (Math.max(0, smoothHp) / max));
             for (int i = 0; i < filled; i++) {
-                ctx.fill(barX + i, barY + shake, barX + i + 1, barY + barH + shake, gradient(anim, i * 0.12f));
+                ctx.fill(barX + i, barY, barX + i + 1, barY + barH, getBarColor(anim, i));
             }
-            
-            // ⚡ KRİTİK VURUŞ GÖSTERGESİ (Ekstra şaşırtıcı özellik)
-            if (hp / max < 0.15f) {
-                ctx.drawTextWithShadow(mc.textRenderer, "!!! LOW !!!", x + w - 45, y + 5, 0xFFFF5555);
+
+            // ⭐ ŞAŞIRTICI DETAY: KRİTİK PARLAMA
+            // Eğer vurduğun kişinin canı %20 altındaysa barın sonunda küçük bir "!" ikonu çıkar
+            if (hp / max < 0.2f) {
+                float pulse = (float) Math.abs(Math.sin(anim * 4));
+                int pulseColor = ( (int)(pulse * 255) << 16 ) | 0x0000; 
+                ctx.drawTextWithShadow(mc.textRenderer, "!", barX + barW + 2, barY - 2, 0xFFFF0000 | pulseColor);
             }
         });
     }
