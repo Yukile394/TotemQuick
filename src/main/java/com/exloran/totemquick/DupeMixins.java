@@ -21,11 +21,11 @@ public abstract class DupeMixins {
     private static float anim = 0;
     private static float damageFlash = 0;
 
-    // Fotoğraftaki neon sarı-yeşil geçişi
-    private static int gradient(float t, float o) {
-        float g = 0.8f + 0.2f * (float)Math.sin(t + o);
-        float r = 0.5f + 0.4f * (float)Math.sin(t + o + 1.5f);
-        return 0xFF000000 | ((int)(r*255)<<16) | ((int)(g*255)<<8) | 40;
+    // Dinamik renk geçişi (Vurduğunda renkler kızıllaşır)
+    private static int getDynamicColor(float t, float o, float flash) {
+        float r = (0.4f + 0.4f * (float)Math.sin(t + o)) + (flash * 0.5f);
+        float g = (0.8f + 0.2f * (float)Math.sin(t + o + 1.5f)) * (1.0f - flash);
+        return 0xFF000000 | ((int)(Math.min(1, r)*255)<<16) | ((int)(Math.min(1, g)*255)<<8) | 50;
     }
 
     static {
@@ -44,47 +44,50 @@ public abstract class DupeMixins {
             float max = living.getMaxHealth();
 
             if (smoothHp < 0) { smoothHp = hp; lastHp = hp; }
+            
+            // 💥 VURUŞ EFEKTİ TETİKLEYİCİ
             if (hp < lastHp) damageFlash = 1.0f;
             lastHp = hp;
 
-            smoothHp += (hp - smoothHp) * (hp < smoothHp ? 0.25f : 0.12f);
+            smoothHp += (hp - smoothHp) * (hp < smoothHp ? 0.22f : 0.12f);
             anim += 0.05f;
             damageFlash = Math.max(0, damageFlash - 0.04f);
 
-            // --- 📏 BOYUTLANDIRMA (SIKI VE TAM AYARLI) ---
-            int x = 10;
-            int y = 10;
+            // --- 📐 TASARIM ---
+            int x = 12;
+            int y = 12;
             int w = 150;
-            int h = 40; // İdeal yükseklik
-            int s = 30; // Skin karesi boyutu
+            int h = 38;
+            int s = 28; // Kafa boyutu
 
-            // 🌫️ Arka Plan
-            ctx.fill(x, y, x + w, y + h, 0xCC000000);
+            // Arka Plan
+            ctx.fill(x, y, x + w, y + h, 0xDD000000);
 
-            // 🧑 SKIN (MİLLİMETRİK HİZALAMA)
+            // 🧑 HATASIZ KAFA ÇİZİMİ (Skin Texture Fix)
             Identifier skin = mc.getEntityRenderDispatcher().getRenderer(living).getTexture(living);
             
-            // Texture koordinatları (8,8 iç yüz - 40,8 dış katman) tam 64x64 ölçeğinde
-            ctx.drawTexture(skin, x + 5, y + 5, 8, 8, s, s, 64, 64);
-            ctx.drawTexture(skin, x + 5, y + 5, 40, 8, s, s, 64, 64);
+            // Texture koordinatlarını 64x64 ölçeğinde sadece kafaya (8,8) kilitledim
+            // Region: U=8, V=8, RegionWidth=8, RegionHeight=8
+            ctx.drawTexture(skin, x + 5, y + 5, s, s, 8, 8, 8, 8, 64, 64);
+            // Dış katman (saç/şapka): U=40, V=8
+            ctx.drawTexture(skin, x + 5, y + 5, s, s, 40, 8, 8, 8, 64, 64);
 
-            // 🔴 HASAR EFEKTİ (Sadece skin üzerine vuran flaş)
+            // 🔴 HASAR ANINDA KAFA PARLAMASI
             if (damageFlash > 0) {
-                int a = (int)(damageFlash * 170);
+                int a = (int)(damageFlash * 180);
                 ctx.fill(x + 5, y + 5, x + 5 + s, y + 5 + s, (a << 24) | 0xFF0000);
             }
 
-            // ✍️ METİNLER
+            // ✍️ YAZILAR
             String name = living.getName().getString().toLowerCase();
-            ctx.drawTextWithShadow(mc.textRenderer, name, x + s + 12, y + 6, 0xFFFFFFFF);
+            ctx.drawTextWithShadow(mc.textRenderer, name, x + s + 12, y + 5, 0xFFFFFFFF);
 
-            // HP Bilgisi (Biraz daha belirgin)
-            String hpText = String.format(Locale.US, "%.1f / %.0f HP", hp, max);
-            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + s + 12, y + 16, 0xFFAAAAAA);
+            String hpText = String.format(Locale.US, "hp: %.1f / %.0f", hp, max);
+            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + s + 12, y + 15, 0xFFAAAAAA);
 
-            // 🔋 CAN BARI (Kalın ve Sıkı)
+            // 🔋 CAN BARI (Dinamik Renk Değişimli)
             int barX = x + s + 12;
-            int barY = y + 28;
+            int barY = y + 26;
             int barW = w - (s + 20);
             int barH = 7;
 
@@ -92,14 +95,17 @@ public abstract class DupeMixins {
 
             int filled = (int)(barW * (Math.max(0, smoothHp) / max));
             for (int i = 0; i < filled; i++) {
-                ctx.fill(barX + i, barY, barX + i + 1, barY + barH, gradient(anim, i * 0.1f));
+                ctx.fill(barX + i, barY, barX + i + 1, barY + barH, getDynamicColor(anim, i * 0.1f, damageFlash));
             }
 
-            // ✨ ŞAŞIRTICI DİNAMİK EFEKT
-            // Rakibin canı azaldıkça barın etrafında beyaz bir parlama (aura) oluşur
+            // ✨ ŞAŞIRTICI EFEKT: KRİTİK KALP ATIŞI
+            // Rakibin canı %30'un altına inerse panel kenarlarında kırmızı bir nabız atar
             if (hp / max < 0.3f) {
-                int auraAlpha = (int)(Math.abs(Math.sin(anim * 5)) * 60);
-                ctx.fill(x, y, x + w, y + h, (auraAlpha << 24) | 0xFFFFFF);
+                float pulse = (float)Math.abs(Math.sin(anim * 6));
+                int pulseAlpha = (int)(pulse * 100);
+                // Üst ve alt kenara ince kırmızı hat
+                ctx.fill(x, y, x + w, y + 1, (pulseAlpha << 24) | 0xFF0000);
+                ctx.fill(x, y + h - 1, x + w, y + h, (pulseAlpha << 24) | 0xFF0000);
             }
         });
     }
