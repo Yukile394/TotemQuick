@@ -1,104 +1,79 @@
 package com.exloran.totemquick.mixin;
 
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.minecraft.client.gui.screen.Screen;
 
-@Mixin(InGameHud.class)
+@Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    private static float hue = 0.0f;
+    private static float smoothHealth = -1;
 
-    private int getRgbColor() {
-        hue += 0.002f;
-        if (hue > 1.0f) hue = 0.0f;
-
-        float h = hue * 6.0f;
-        int i = (int) h;
-        float f = h - i;
-        float q = 1.0f - f;
-
-        float r = 0, g = 0, b = 0;
-
-        switch (i % 6) {
-            case 0 -> { r = 1; g = f; b = 0; }
-            case 1 -> { r = q; g = 1; b = 0; }
-            case 2 -> { r = 0; g = 1; b = f; }
-            case 3 -> { r = 0; g = q; b = 1; }
-            case 4 -> { r = f; g = 0; b = 1; }
-            case 5 -> { r = 1; g = 0; b = q; }
-        }
-
-        int ri = (int)(r * 255);
-        int gi = (int)(g * 255);
-        int bi = (int)(b * 255);
-
-        return 0xFF000000 | (ri << 16) | (gi << 8) | bi;
+    // Basit renk geçişi
+    private static int getHealthColor(float pct) {
+        if (pct > 0.66f) return 0xFF55FF55; // yeşil
+        if (pct > 0.33f) return 0xFFFFAA00; // turuncu
+        return 0xFFFF5555; // kırmızı
     }
 
-    @Inject(method = "render", at = @At("TAIL"))
-    private void renderTargetHud(DrawContext context, float tickDelta, CallbackInfo ci) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client == null || client.player == null || client.world == null) return;
+    static {
+        // HUD'a çizim ekliyoruz (envanter açıkken çizmez)
+        HudRenderCallback.EVENT.register((DrawContext context, float tickDelta) -> {
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player == null || client.world == null) return;
+            if (client.currentScreen != null) return; // envanter vs açıkken gösterme
 
-        // GUI açıksa gösterme (envanter, esc vs)
-        if (client.currentScreen != null) return;
+            HitResult hit = client.crosshairTarget;
+            if (hit == null || hit.getType() != HitResult.Type.ENTITY) {
+                smoothHealth = -1;
+                return;
+            }
 
-        HitResult hit = client.crosshairTarget;
-        if (hit == null || hit.getType() != HitResult.Type.ENTITY) return;
+            Entity entity = ((EntityHitResult) hit).getEntity();
+            if (!(entity instanceof LivingEntity living)) return;
 
-        EntityHitResult ehr = (EntityHitResult) hit;
-        if (!(ehr.getEntity() instanceof LivingEntity living)) return;
+            float health = living.getHealth();
+            float maxHealth = living.getMaxHealth();
+            float pct = health / maxHealth;
 
-        float health = living.getHealth();
-        float maxHealth = living.getMaxHealth();
+            if (smoothHealth < 0) smoothHealth = health;
+            // Yumuşak geçiş
+            smoothHealth += (health - smoothHealth) * 0.1f;
 
-        String name = living.getDisplayName().getString();
+            int screenW = context.getScaledWindowWidth();
 
-        int x = 80;
-        int y = 20;
+            // Konum: sol üst - ortaya yakın
+            int x = 10;
+            int y = 20;
 
-        int color = getRgbColor();
+            int barWidth = 120;
+            int barHeight = 10;
 
-        // İsim
-        context.drawTextWithShadow(
-                client.textRenderer,
-                Text.literal(name),
-                x,
-                y,
-                color
-        );
+            // Arkaplan
+            context.fill(x - 2, y - 2, x + barWidth + 2, y + barHeight + 12, 0xAA000000);
 
-        // HP text
-        String hpText = String.format("❤ %.1f / %.1f", health, maxHealth);
-        context.drawTextWithShadow(
-                client.textRenderer,
-                Text.literal(hpText),
-                x,
-                y + 10,
-                0xFFFFFFFF
-        );
+            // Bar arkaplanı
+            context.fill(x, y, x + barWidth, y + barHeight, 0xFF222222);
 
-        // Bar
-        int barWidth = 100;
-        int barHeight = 6;
-        int barX = x;
-        int barY = y + 24;
+            int filled = (int) (barWidth * (smoothHealth / maxHealth));
+            int color = getHealthColor(smoothHealth / maxHealth);
 
-        float ratio = Math.max(0.0f, Math.min(1.0f, health / maxHealth));
-        int filled = (int) (barWidth * ratio);
+            // Can barı
+            context.fill(x, y, x + filled, y + barHeight, color);
 
-        // Arkaplan
-        context.fill(barX - 1, barY - 1, barX + barWidth + 1, barY + barHeight + 1, 0x90000000);
-        // RGB dolu kısım
-        context.fill(barX, barY, barX + filled, barY + barHeight, color);
+            // İsim + can yazısı
+            String name = living.getName().getString();
+            String hpText = String.format("%.1f / %.1f ❤", smoothHealth, maxHealth);
+
+            context.drawTextWithShadow(client.textRenderer, Text.literal(name), x, y + 14, 0xFFFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, Text.literal(hpText), x + barWidth - client.textRenderer.getWidth(hpText), y + 14, 0xFFFF55FF);
+        });
     }
 }
