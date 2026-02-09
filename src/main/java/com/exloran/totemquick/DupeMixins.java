@@ -5,7 +5,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,7 +15,6 @@ public abstract class DupeMixins {
 
     private static float smoothHealth = -1;
 
-    // Basit renk geçişi
     private static int getHealthColor(float pct) {
         if (pct > 0.66f) return 0xFF55FF55; // yeşil
         if (pct > 0.33f) return 0xFFFFAA00; // turuncu
@@ -24,11 +22,10 @@ public abstract class DupeMixins {
     }
 
     static {
-        // HUD'a çizim ekliyoruz (envanter açıkken çizmez)
         HudRenderCallback.EVENT.register((DrawContext context, float tickDelta) -> {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client.player == null || client.world == null) return;
-            if (client.currentScreen != null) return; // envanter vs açıkken gösterme
+            if (client.currentScreen != null) return; // envanter açıkken gösterme
 
             HitResult hit = client.crosshairTarget;
             if (hit == null || hit.getType() != HitResult.Type.ENTITY) {
@@ -41,23 +38,18 @@ public abstract class DupeMixins {
 
             float health = living.getHealth();
             float maxHealth = living.getMaxHealth();
-            float pct = health / maxHealth;
 
             if (smoothHealth < 0) smoothHealth = health;
-            // Yumuşak geçiş
-            smoothHealth += (health - smoothHealth) * 0.1f;
+            smoothHealth += (health - smoothHealth) * 0.1f; // yumuşatma
 
-            int screenW = context.getScaledWindowWidth();
-
-            // Konum: sol üst - ortaya yakın
             int x = 10;
             int y = 20;
 
             int barWidth = 120;
             int barHeight = 10;
 
-            // Arkaplan
-            context.fill(x - 2, y - 2, x + barWidth + 2, y + barHeight + 12, 0xAA000000);
+            // Arkaplan panel
+            context.fill(x - 2, y - 2, x + barWidth + 2, y + barHeight + 22, 0xAA000000);
 
             // Bar arkaplanı
             context.fill(x, y, x + barWidth, y + barHeight, 0xFF222222);
@@ -68,12 +60,15 @@ public abstract class DupeMixins {
             // Can barı
             context.fill(x, y, x + filled, y + barHeight, color);
 
-            // İsim + can yazısı
             String name = living.getName().getString();
             String hpText = String.format("%.1f / %.1f ❤", smoothHealth, maxHealth);
 
-            context.drawTextWithShadow(client.textRenderer, Text.literal(name), x, y + 14, 0xFFFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, Text.literal(hpText), x + barWidth - client.textRenderer.getWidth(hpText), y + 14, 0xFFFF55FF);
+            // İsim
+            context.drawTextWithShadow(client.textRenderer, name, x, y + 12, 0xFFFFFFFF);
+
+            // Can yazısı (sağa yaslı)
+            int hpWidth = client.textRenderer.getWidth(hpText);
+            context.drawTextWithShadow(client.textRenderer, hpText, x + barWidth - hpWidth, y + 12, 0xFFFF55FF);
         });
     }
 }
