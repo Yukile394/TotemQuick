@@ -6,10 +6,10 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Locale;
@@ -17,56 +17,20 @@ import java.util.Locale;
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    private static float smoothHp = -1;
-    private static float lastHp = -1;
-    private static float anim = 0;
-    private static float damageFlash = 0;
-    private static float shine = 0;
+    private static float smoothHp = -1f;
+    private static float lastHp = -1f;
+    private static float anim = 0f;
+    private static float damageFlash = 0f;
 
-    // 🌟 Altın / Sarı premium gradient
-    private static int goldGradient(float t, float o) {
-        float r = 0.85f + 0.15f * (float)Math.sin(t + o);
-        float g = 0.70f + 0.25f * (float)Math.sin(t + o + 2.0);
-        float b = 0.15f + 0.10f * (float)Math.sin(t + o + 4.0);
-
-        int ir = Math.min(255, Math.max(0, (int)(r * 255)));
-        int ig = Math.min(255, Math.max(0, (int)(g * 255)));
-        int ib = Math.min(255, Math.max(0, (int)(b * 255)));
-
-        return 0xFF000000 | (ir << 16) | (ig << 8) | ib;
-    }
-
-    // 🟡 Yuvarlatılmış bar çizimi (köşeler döngü gibi)
-    private static void drawRoundedBar(DrawContext ctx, int x, int y, int w, int h, float fill, float time) {
-        int radius = h / 2; // orta kalınlık, kapsül şekli
-
-        // Arka plan (koyu)
-        for (int i = 0; i < h; i++) {
-            int yy = y + i;
-            int dx = Math.abs(i - h / 2);
-            int cut = (int)Math.sqrt(radius * radius - dx * dx);
-
-            ctx.fill(x + radius - cut, yy, x + w - (radius - cut), yy + 1, 0xFF1E1E1E);
-        }
-
-        int filled = (int)(w * fill);
-        if (filled <= 0) return;
-
-        // Ön plan (altın animasyonlu)
-        for (int i = 0; i < h; i++) {
-            int yy = y + i;
-            int dx = Math.abs(i - h / 2);
-            int cut = (int)Math.sqrt(radius * radius - dx * dx);
-
-            int start = x + radius - cut;
-            int end = Math.min(x + filled, x + w - (radius - cut));
-
-            for (int px = start; px < end; px++) {
-                float sweep = (float)Math.sin((px * 0.15f) + time * 3f) * 0.5f + 0.5f;
-                int col = goldGradient(time * 1.2f, px * 0.08f + sweep);
-                ctx.fill(px, yy, px + 1, yy + 1, col);
-            }
-        }
+    // 🟢 Fotoğrafa yakın yeşil-sarı gradient
+    private static int gradient(float t, float o) {
+        float r = 0.4f + 0.3f * (float)Math.sin(t + o);
+        float g = 0.8f + 0.2f * (float)Math.sin(t + o + 2);
+        float b = 0.3f + 0.15f * (float)Math.sin(t + o + 4);
+        return 0xFF000000
+                | ((int)(r * 255) << 16)
+                | ((int)(g * 255) << 8)
+                | (int)(b * 255);
     }
 
     static {
@@ -95,23 +59,22 @@ public abstract class DupeMixins {
             if (hp < lastHp) damageFlash = 1f;
             lastHp = hp;
 
-            float speed = hp < smoothHp ? 0.30f : 0.12f;
+            float speed = hp < smoothHp ? 0.28f : 0.12f;
             smoothHp += (hp - smoothHp) * speed;
 
-            anim += 0.035f;
-            shine += 0.05f;
-            damageFlash *= 0.85f;
+            anim += 0.04f;
+            damageFlash *= 0.82f;
 
-            // 📐 Dış yapı AYNI
-            int x = 8;
-            int y = 18;
-            int w = 150;
-            int h = 36;
+            // 📐 ORTA BOY – FOTOĞRAF ORANI
+            int x = 10;
+            int y = 20;
+            int w = 140;
+            int h = 34;
 
             // 🌫️ Arka plan
             ctx.fill(x, y, x + w, y + h, 0xAA000000);
 
-            // 🧑 Yüz (8x8)
+            // 🧑 SKIN YÜZÜ – TAM ORTA (8x8 → 16x16)
             Identifier skin = mc.getEntityRenderDispatcher()
                     .getRenderer(living)
                     .getTexture(living);
@@ -120,31 +83,54 @@ public abstract class DupeMixins {
                     skin,
                     x + 6, y + 6,
                     8, 8,
-                    8, 8,
+                    16, 16,
                     64, 64
             );
 
             // ✍️ Nick
-            String name = living.getName().getString();
-            ctx.drawTextWithShadow(mc.textRenderer, name, x + 26, y + 4, 0xFFFFE08A);
+            ctx.drawTextWithShadow(
+                    mc.textRenderer,
+                    living.getName().getString(),
+                    x + 28,
+                    y + 4,
+                    0xFFFFFFFF
+            );
 
             // ❤️ HP yazısı
-            String hpText = String.format(Locale.US, "HP %.1f / %.1f", smoothHp, max);
-            ctx.drawTextWithShadow(mc.textRenderer, hpText, x + 26, y + 15, 0xFFFFD070);
+            String hpText = String.format(Locale.US, "%.1f / %.1f", smoothHp, max);
+            ctx.drawTextWithShadow(
+                    mc.textRenderer,
+                    hpText,
+                    x + 28,
+                    y + 15,
+                    0xFFDDDDDD
+            );
 
-            // ❤️ Yuvarlak (kapsül) can barı
-            int barX = x + 26;
-            int barY = y + h - 10;
-            int barW = w - 32;
-            int barH = 7; // orta kalınlık
+            // ❤️ HP BAR
+            int barX = x + 28;
+            int barY = y + h - 7;
+            int barW = w - 34;
 
-            float fill = Math.max(0f, Math.min(1f, smoothHp / max));
-            drawRoundedBar(ctx, barX, barY, barW, barH, fill, anim);
+            ctx.fill(barX, barY, barX + barW, barY + 4, 0xFF1F1F1F);
 
-            // 💥 Hasar alınca gold flash
+            int filled = (int)(barW * (smoothHp / max));
+            for (int i = 0; i < filled; i++) {
+                ctx.fill(
+                        barX + i,
+                        barY,
+                        barX + i + 1,
+                        barY + 4,
+                        gradient(anim, i * 0.18f)
+                );
+            }
+
+            // 💥 Sarımsı hasar flash (fotoğraftaki gibi)
             if (damageFlash > 0.05f) {
                 int a = (int)(damageFlash * 80);
-                ctx.fill(x, y, x + w, y + h, (a << 24) | 0xFFD08000);
+                ctx.fill(
+                        x, y, x + w, y + h,
+                        (a << 24) | 0xFFFFCC33
+                );
             }
         });
     }
