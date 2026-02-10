@@ -13,13 +13,13 @@ import org.spongepowered.asm.mixin.Mixin;
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    // TEXTURE
+    // ✅ 1.21.x UYUMLU
     private static final Identifier BASE =
-            new Identifier("totemquick", "textures/gui/keyboard_hud.png");
-    private static final Identifier ACTIVE =
-            new Identifier("totemquick", "textures/gui/keyboard_hud_active.png");
+            Identifier.of("totemquick", "textures/gui/keyboard_hud.png");
 
-    // Texture size
+    private static final Identifier ACTIVE =
+            Identifier.of("totemquick", "textures/gui/keyboard_hud_active.png");
+
     private static final int TEX_W = 612;
     private static final int TEX_H = 408;
 
@@ -36,7 +36,7 @@ public abstract class DupeMixins {
 
             long window = mc.getWindow().getHandle();
 
-            // ⌨️ KEYBOARD
+            // ⌨️ KLAVYE
             drawIfPressed(ctx, window, GLFW.GLFW_KEY_W, x, y);
             drawIfPressed(ctx, window, GLFW.GLFW_KEY_A, x, y);
             drawIfPressed(ctx, window, GLFW.GLFW_KEY_S, x, y);
@@ -45,10 +45,7 @@ public abstract class DupeMixins {
             drawIfPressed(ctx, window, GLFW.GLFW_KEY_SPACE, x, y);
 
             // 🖱️ MOUSE
-            if (mc.options.attackKey.isPressed()) {
-                ctx.drawTexture(ACTIVE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
-            }
-            if (mc.options.useKey.isPressed()) {
+            if (mc.options.attackKey.isPressed() || mc.options.useKey.isPressed()) {
                 ctx.drawTexture(ACTIVE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
             }
         });
