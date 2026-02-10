@@ -17,11 +17,11 @@ public abstract class DupeMixins {
     private static final Identifier BASE =
             Identifier.of("totemquick", "textures/gui/keyboard_hud.png");
 
-    private static final Identifier ACTIVE =
-            Identifier.of("totemquick", "textures/gui/keyboard_hud_active.png");
-
     private static final int TEX_W = 612;
     private static final int TEX_H = 408;
+
+    // 🔵 AKTİF TUŞ RENGİ (ŞIK MAVİ)
+    private static final int ACTIVE_COLOR = 0xAA2A6CFF;
 
     static {
         HudRenderCallback.EVENT.register((ctx, tick) -> {
@@ -39,7 +39,7 @@ public abstract class DupeMixins {
             int x = (int) (cfg.keyboardHudX / cfg.keyboardHudScale);
             int y = (int) (cfg.keyboardHudY / cfg.keyboardHudScale);
 
-            // BASE (GRİ)
+            // 🧱 BASE (GRİ HUD)
             ctx.drawTexture(BASE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
 
             long window = mc.getWindow().getHandle();
@@ -60,10 +60,10 @@ public abstract class DupeMixins {
 
             // ==== MOUSE ====
             if (mc.options.attackKey.isPressed()) {
-                draw(ctx, 420, 140, 80, 110); // sol tık
+                fill(ctx, 420, 140, 80, 110); // sol tık
             }
             if (mc.options.useKey.isPressed()) {
-                draw(ctx, 500, 140, 80, 110); // sağ tık
+                fill(ctx, 500, 140, 80, 110); // sağ tık
             }
 
             ctx.getMatrices().pop();
@@ -73,11 +73,12 @@ public abstract class DupeMixins {
     private static void key(DrawContext ctx, long window, int key,
                             int x, int y, int w, int h) {
         if (InputUtil.isKeyPressed(window, key)) {
-            draw(ctx, x, y, w, h);
+            fill(ctx, x, y, w, h);
         }
     }
 
-    private static void draw(DrawContext ctx, int x, int y, int w, int h) {
-        ctx.drawTexture(ACTIVE, x, y, x, y, w, h, TEX_W, TEX_H);
+    // 🔵 SADECE TUŞ İÇİ RENK (TAŞMA YOK)
+    private static void fill(DrawContext ctx, int x, int y, int w, int h) {
+        ctx.fill(x, y, x + w, y + h, ACTIVE_COLOR);
     }
-                }
+}
