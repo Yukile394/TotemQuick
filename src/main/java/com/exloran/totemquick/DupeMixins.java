@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.Mixin;
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    // ✅ 1.21.x UYUMLU
     private static final Identifier BASE =
             Identifier.of("totemquick", "textures/gui/keyboard_hud.png");
 
@@ -30,30 +29,60 @@ public abstract class DupeMixins {
 
             int x = 10;
             int y = 20;
-
-            // 🧱 NORMAL HUD
-            ctx.drawTexture(BASE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
-
             long window = mc.getWindow().getHandle();
 
-            // ⌨️ KLAVYE
-            drawIfPressed(ctx, window, GLFW.GLFW_KEY_W, x, y);
-            drawIfPressed(ctx, window, GLFW.GLFW_KEY_A, x, y);
-            drawIfPressed(ctx, window, GLFW.GLFW_KEY_S, x, y);
-            drawIfPressed(ctx, window, GLFW.GLFW_KEY_D, x, y);
-            drawIfPressed(ctx, window, GLFW.GLFW_KEY_LEFT_SHIFT, x, y);
-            drawIfPressed(ctx, window, GLFW.GLFW_KEY_SPACE, x, y);
+            // 🧱 BASE – 1 KEZ
+            ctx.drawTexture(BASE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
+
+            // ⌨️ KLAVYE (bölgesel)
+            key(ctx, window, GLFW.GLFW_KEY_W, 210, 95, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_A, 150, 160, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_S, 210, 160, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_D, 270, 160, 60, 60, x, y);
+
+            key(ctx, window, GLFW.GLFW_KEY_Q, 150, 95, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_E, 270, 95, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_R, 330, 95, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_T, 390, 95, 60, 60, x, y);
+
+            key(ctx, window, GLFW.GLFW_KEY_Z, 210, 225, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_X, 270, 225, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_C, 330, 225, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_V, 390, 225, 60, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_B, 450, 225, 60, 60, x, y);
+
+            key(ctx, window, GLFW.GLFW_KEY_LEFT_SHIFT, 120, 225, 120, 60, x, y);
+            key(ctx, window, GLFW.GLFW_KEY_SPACE, 210, 300, 300, 60, x, y);
 
             // 🖱️ MOUSE
-            if (mc.options.attackKey.isPressed() || mc.options.useKey.isPressed()) {
-                ctx.drawTexture(ACTIVE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
+            if (mc.options.attackKey.isPressed()) {
+                drawPart(ctx, 500, 95, 50, 120, x, y);
+            }
+            if (mc.options.useKey.isPressed()) {
+                drawPart(ctx, 555, 95, 50, 120, x, y);
             }
         });
     }
 
-    private static void drawIfPressed(DrawContext ctx, long window, int key, int x, int y) {
+    // 🔑 Klavye helper
+    private static void key(DrawContext ctx, long window, int key,
+                            int u, int v, int w, int h,
+                            int x, int y) {
         if (InputUtil.isKeyPressed(window, key)) {
-            ctx.drawTexture(ACTIVE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
+            drawPart(ctx, u, v, w, h, x, y);
         }
+    }
+
+    // 🎯 Bölgesel çizim (GLITCH BURADA BİTER)
+    private static void drawPart(DrawContext ctx,
+                                 int u, int v, int w, int h,
+                                 int x, int y) {
+        ctx.drawTexture(
+                ACTIVE,
+                x + u, y + v,
+                u, v,
+                w, h,
+                TEX_W, TEX_H
+        );
     }
 }
