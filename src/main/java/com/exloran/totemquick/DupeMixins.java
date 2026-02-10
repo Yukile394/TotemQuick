@@ -3,19 +3,25 @@ package com.exloran.totemquick.mixin;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    private static final int COLOR_IDLE = 0xAA2E3F1F; // koyu yeşil
-    private static final int COLOR_ACTIVE = 0xFF2A6CFF; // MAVİ (basılı)
-    private static final int BORDER = 0xFFFFFFFF;
+    // TEXTURE
+    private static final Identifier BASE =
+            new Identifier("totemquick", "textures/gui/keyboard_hud.png");
+    private static final Identifier ACTIVE =
+            new Identifier("totemquick", "textures/gui/keyboard_hud_active.png");
+
+    // Texture size
+    private static final int TEX_W = 612;
+    private static final int TEX_H = 408;
 
     static {
         HudRenderCallback.EVENT.register((DrawContext ctx, RenderTickCounter tick) -> {
@@ -24,51 +30,33 @@ public abstract class DupeMixins {
 
             int x = 10;
             int y = 20;
-            int key = 18;
-            int gap = 3;
 
-            // Tuş çizme helper
-            drawKey(ctx, mc, x + key, y + key, key, "W", GLFW.GLFW_KEY_W);
-            drawKey(ctx, mc, x, y + key * 2 + gap, key, "A", GLFW.GLFW_KEY_A);
-            drawKey(ctx, mc, x + key + gap, y + key * 2 + gap, key, "S", GLFW.GLFW_KEY_S);
-            drawKey(ctx, mc, x + (key + gap) * 2, y + key * 2 + gap, key, "D", GLFW.GLFW_KEY_D);
+            // 🧱 NORMAL HUD
+            ctx.drawTexture(BASE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
 
-            drawWideKey(ctx, mc, x, y + key * 3 + gap * 2, key * 3 + gap * 2, "SHIFT", GLFW.GLFW_KEY_LEFT_SHIFT);
-            drawWideKey(ctx, mc, x, y + key * 4 + gap * 3, key * 4 + gap * 3, "SPACE", GLFW.GLFW_KEY_SPACE);
+            long window = mc.getWindow().getHandle();
 
-            // Mouse
-            int mx = x + key * 4 + 20;
-            int my = y + key;
+            // ⌨️ KEYBOARD
+            drawIfPressed(ctx, window, GLFW.GLFW_KEY_W, x, y);
+            drawIfPressed(ctx, window, GLFW.GLFW_KEY_A, x, y);
+            drawIfPressed(ctx, window, GLFW.GLFW_KEY_S, x, y);
+            drawIfPressed(ctx, window, GLFW.GLFW_KEY_D, x, y);
+            drawIfPressed(ctx, window, GLFW.GLFW_KEY_LEFT_SHIFT, x, y);
+            drawIfPressed(ctx, window, GLFW.GLFW_KEY_SPACE, x, y);
 
-            drawMouse(ctx, mc, mx, my, true);
-            drawMouse(ctx, mc, mx + 26, my, false);
+            // 🖱️ MOUSE
+            if (mc.options.attackKey.isPressed()) {
+                ctx.drawTexture(ACTIVE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
+            }
+            if (mc.options.useKey.isPressed()) {
+                ctx.drawTexture(ACTIVE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
+            }
         });
     }
 
-    private static void drawKey(DrawContext ctx, MinecraftClient mc, int x, int y, int s, String text, int keyCode) {
-        boolean pressed = InputUtil.isKeyPressed(mc.getWindow().getHandle(), keyCode);
-        ctx.fill(x, y, x + s, y + s, pressed ? COLOR_ACTIVE : COLOR_IDLE);
-        drawBorder(ctx, x, y, s, s);
-        ctx.drawTextWithShadow(mc.textRenderer, text, x + 6, y + 5, 0xFFFFFFFF);
-    }
-
-    private static void drawWideKey(DrawContext ctx, MinecraftClient mc, int x, int y, int w, String text, int keyCode) {
-        boolean pressed = InputUtil.isKeyPressed(mc.getWindow().getHandle(), keyCode);
-        ctx.fill(x, y, x + w, y + 18, pressed ? COLOR_ACTIVE : COLOR_IDLE);
-        drawBorder(ctx, x, y, w, 18);
-        ctx.drawTextWithShadow(mc.textRenderer, text, x + 6, y + 5, 0xFFFFFFFF);
-    }
-
-    private static void drawMouse(DrawContext ctx, MinecraftClient mc, int x, int y, boolean left) {
-        boolean pressed = left ? mc.options.attackKey.isPressed() : mc.options.useKey.isPressed();
-        ctx.fill(x, y, x + 22, y + 32, pressed ? COLOR_ACTIVE : COLOR_IDLE);
-        drawBorder(ctx, x, y, 22, 32);
-    }
-
-    private static void drawBorder(DrawContext ctx, int x, int y, int w, int h) {
-        ctx.fill(x, y, x + w, y + 1, BORDER);
-        ctx.fill(x, y + h - 1, x + w, y + h, BORDER);
-        ctx.fill(x, y, x + 1, y + h, BORDER);
-        ctx.fill(x + w - 1, y, x + w, y + h, BORDER);
+    private static void drawIfPressed(DrawContext ctx, long window, int key, int x, int y) {
+        if (InputUtil.isKeyPressed(window, key)) {
+            ctx.drawTexture(ACTIVE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
+        }
     }
 }
