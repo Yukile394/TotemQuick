@@ -19,8 +19,12 @@ public abstract class DupeMixins {
     private static final Identifier ACTIVE =
             Identifier.of("totemquick", "textures/gui/keyboard_hud_active.png");
 
+    // GERÇEK TEXTURE BOYUTU
     private static final int TEX_W = 612;
     private static final int TEX_H = 408;
+
+    // HUD ÖLÇEK
+    private static final float SCALE = 0.6f;
 
     static {
         HudRenderCallback.EVENT.register((DrawContext ctx, RenderTickCounter tick) -> {
@@ -29,60 +33,53 @@ public abstract class DupeMixins {
 
             int x = 10;
             int y = 20;
+
+            ctx.getMatrices().push();
+            ctx.getMatrices().scale(SCALE, SCALE, 1f);
+
+            int sx = (int) (x / SCALE);
+            int sy = (int) (y / SCALE);
+
+            // 🔹 BASE (GRİ)
+            ctx.drawTexture(BASE, sx, sy, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
+
             long window = mc.getWindow().getHandle();
 
-            // 🧱 BASE – 1 KEZ
-            ctx.drawTexture(BASE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
+            // 🔹 TUŞLAR (SADECE İLGİLİ ALAN)
+            drawKey(ctx, window, GLFW.GLFW_KEY_W, 150, 130, 70, 70);
+            drawKey(ctx, window, GLFW.GLFW_KEY_A, 80, 200, 70, 70);
+            drawKey(ctx, window, GLFW.GLFW_KEY_S, 150, 200, 70, 70);
+            drawKey(ctx, window, GLFW.GLFW_KEY_D, 220, 200, 70, 70);
 
-            // ⌨️ KLAVYE (bölgesel)
-            key(ctx, window, GLFW.GLFW_KEY_W, 210, 95, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_A, 150, 160, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_S, 210, 160, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_D, 270, 160, 60, 60, x, y);
+            drawKey(ctx, window, GLFW.GLFW_KEY_SPACE, 150, 290, 220, 70);
+            drawKey(ctx, window, GLFW.GLFW_KEY_LEFT_SHIFT, 20, 200, 120, 70);
 
-            key(ctx, window, GLFW.GLFW_KEY_Q, 150, 95, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_E, 270, 95, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_R, 330, 95, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_T, 390, 95, 60, 60, x, y);
-
-            key(ctx, window, GLFW.GLFW_KEY_Z, 210, 225, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_X, 270, 225, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_C, 330, 225, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_V, 390, 225, 60, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_B, 450, 225, 60, 60, x, y);
-
-            key(ctx, window, GLFW.GLFW_KEY_LEFT_SHIFT, 120, 225, 120, 60, x, y);
-            key(ctx, window, GLFW.GLFW_KEY_SPACE, 210, 300, 300, 60, x, y);
-
-            // 🖱️ MOUSE
-            if (mc.options.attackKey.isPressed()) {
-                drawPart(ctx, 500, 95, 50, 120, x, y);
-            }
-            if (mc.options.useKey.isPressed()) {
-                drawPart(ctx, 555, 95, 50, 120, x, y);
-            }
+            ctx.getMatrices().pop();
         });
     }
 
-    // 🔑 Klavye helper
-    private static void key(DrawContext ctx, long window, int key,
-                            int u, int v, int w, int h,
-                            int x, int y) {
+    // 🔹 TUŞ BASILINCA SADECE O ALANI MAVİ ÇİZER
+    private static void drawKey(
+            DrawContext ctx,
+            long window,
+            int key,
+            int texX,
+            int texY,
+            int w,
+            int h
+    ) {
         if (InputUtil.isKeyPressed(window, key)) {
-            drawPart(ctx, u, v, w, h, x, y);
+            ctx.drawTexture(
+                    ACTIVE,
+                    texX,
+                    texY,
+                    texX,
+                    texY,
+                    w,
+                    h,
+                    TEX_W,
+                    TEX_H
+            );
         }
-    }
-
-    // 🎯 Bölgesel çizim (GLITCH BURADA BİTER)
-    private static void drawPart(DrawContext ctx,
-                                 int u, int v, int w, int h,
-                                 int x, int y) {
-        ctx.drawTexture(
-                ACTIVE,
-                x + u, y + v,
-                u, v,
-                w, h,
-                TEX_W, TEX_H
-        );
     }
 }
