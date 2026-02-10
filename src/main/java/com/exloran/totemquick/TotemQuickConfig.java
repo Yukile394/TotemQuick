@@ -12,26 +12,26 @@ public class TotemQuickConfig implements ConfigData {
     // Mod açık / kapalı
     public boolean enabled = true;
 
-    // Sesli uyarı açık mı
+    // Sesli uyarı
     public boolean sesliUyari = true;
 
-    // Totem yok uyarı rengi (chat için)
+    // Totem yok uyarı rengi
     public String uyarirengi = "red";
 
-    /* ================== HIT EFFECT ================== */
+    /* ================== KEYBOARD HUD ================== */
 
-    // Vurunca ekran flash aktif mi
-    public boolean hitFlashEnabled = true;
+    // HUD açık mı
+    public boolean keyboardHudEnabled = true;
 
-    // Hit flash rengi (HEX)
-    // Örnek: #FFFF00 (sarı), #00FF00 (yeşil)
-    public String hitFlashColor = "#FFFF00";
+    // HUD boyutu (0.3 = küçük, 1.0 = büyük)
+    public float keyboardHudScale = 0.45f;
 
-    // Hit flash alpha (0-100)
-    public float hitFlashAlpha = 35.0f;
+    // HUD X konumu
+    public int keyboardHudX = 10;
 
-    /* -------------------------------------------------- */
-    /* CHAT RENK PARSE (AYNI KALDI) */
+    // HUD Y konumu
+    public int keyboardHudY = 20;
+
     /* -------------------------------------------------- */
 
     public static Formatting parseColor(String color) {
@@ -39,28 +39,6 @@ public class TotemQuickConfig implements ConfigData {
         Formatting f = Formatting.byName(color.toLowerCase());
         return f != null ? f : Formatting.RED;
     }
-
-    /* -------------------------------------------------- */
-    /* HEX -> ARGB (GENEL RENK PARSER) */
-    /* -------------------------------------------------- */
-
-    public static int parseHexColor(String hex, float alphaPercent) {
-        if (hex == null || !hex.startsWith("#")) hex = "#FFFFFF";
-
-        int rgb;
-        try {
-            rgb = Integer.parseInt(hex.substring(1), 16);
-        } catch (Exception e) {
-            rgb = 0xFFFFFF;
-        }
-
-        int a = Math.min(255, Math.max(0, (int)(255f * (alphaPercent / 100f))));
-        return (a << 24) | rgb;
-    }
-
-    /* -------------------------------------------------- */
-    /* SABİT SES */
-    /* -------------------------------------------------- */
 
     public static SoundEvent getUyariSesi() {
         return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
