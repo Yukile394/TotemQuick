@@ -5,13 +5,17 @@ import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.util.math.RotationAxis;
+import org.spongepowered.asm.mixin.Mixin;
 
+@Mixin(Screen.class)
 public abstract class DupeMixins {
 
     // 🎯 Target icon
@@ -19,7 +23,7 @@ public abstract class DupeMixins {
             Identifier.of("totemquick", "textures/gui/target.png");
 
     static {
-        HudRenderCallback.EVENT.register((ctx, tick) -> {
+        HudRenderCallback.EVENT.register((DrawContext ctx, float tick) -> {
             MinecraftClient mc = MinecraftClient.getInstance();
             if (mc.player == null || mc.currentScreen != null) return;
 
@@ -55,7 +59,7 @@ public abstract class DupeMixins {
             // Merkeze taşı
             ctx.getMatrices().translate(cx, cy, 0);
             // Döndür
-            ctx.getMatrices().multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Z.rotationDegrees(angle));
+            ctx.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(angle));
 
             int size = 32;
             // Merkezden dönmesi için geri al
