@@ -11,11 +11,18 @@ import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
+// EKLEDİK
+import com.exloran.totemquick.hud.TargetHud;
+
 public class TotemQuickClient implements ClientModInitializer {
     private static KeyBinding totemKey;
 
     @Override
     public void onInitializeClient() {
+
+        // ✅ HUD başlat
+        TargetHud.init();
+
         totemKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.totemquick.swap",
                 InputUtil.Type.KEYSYM,
