@@ -9,7 +9,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
-import com.mojang.blaze3d.systems.RenderSystem;
 import org.joml.Quaternionf;
 
 public abstract class DupeMixins {
@@ -41,33 +40,24 @@ public abstract class DupeMixins {
 
             long time = System.currentTimeMillis();
 
-            // Yavaş dönüş (derece)
+            // Dönüş
             float angleDeg = (time % 10000L) / 10000f * 360f;
             float angleRad = (float) Math.toRadians(angleDeg);
-
-            // Renk animasyonu
-            float t = (float) (Math.sin(time / 500.0) * 0.5 + 0.5);
-            float r = 1.0f;
-            float g = 0.5f + 0.5f * t;
-            float b = 0.7f * (1.0f - t);
 
             ctx.getMatrices().push();
 
             // Merkeze taşı
             ctx.getMatrices().translate(cx, cy, 0);
 
-            // ✅ 1.21 uyumlu dönüş (Quaternionf ile)
+            // 1.21 uyumlu dönüş
             ctx.getMatrices().multiply(new Quaternionf().rotateZ(angleRad));
 
-            int size = 64; // 🔥 Büyüttüm (32 yerine 64)
+            int size = 64;
 
             // Merkezden dönmesi için geri al
             ctx.getMatrices().translate(-size / 2f, -size / 2f, 0);
 
-            // Renk uygula
-            RenderSystem.setShaderColor(r, g, b, 1.0f);
-
-            // Çiz
+            // Çiz (RENKLE OYNAMIYORUZ)
             ctx.drawTexture(
                     TARGET,
                     0, 0,
@@ -75,9 +65,6 @@ public abstract class DupeMixins {
                     size, size,
                     size, size
             );
-
-            // Rengi sıfırla
-            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
             ctx.getMatrices().pop();
         });
