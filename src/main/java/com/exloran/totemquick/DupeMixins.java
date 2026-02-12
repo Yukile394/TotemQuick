@@ -1,7 +1,5 @@
 package com.exloran.totemquick.mixin;
 
-import com.exloran.totemquick.TotemQuickConfig;
-import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.*;
@@ -12,6 +10,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.RotationAxis;
+import net.minecraft.client.render.OverlayTexture;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 
@@ -77,14 +76,41 @@ public abstract class DupeMixins {
 
             Matrix4f mat = matrices.peek().getPositionMatrix();
 
-            float size = 0.5f; // dünya içi boyut (gerçekçi)
+            float size = 0.5f; // dünya içi boyut
 
-            vc.vertex(mat, -size, -size, 0).color(r, g, b, 1f).texture(0, 1).light(0xF000F0).next();
-            vc.vertex(mat,  size, -size, 0).color(r, g, b, 1f).texture(1, 1).light(0xF000F0).next();
-            vc.vertex(mat,  size,  size, 0).color(r, g, b, 1f).texture(1, 0).light(0xF000F0).next();
-            vc.vertex(mat, -size,  size, 0).color(r, g, b, 1f).texture(0, 0).light(0xF000F0).next();
+            vc.vertex(mat, -size, -size, 0)
+                    .color(r, g, b, 1f)
+                    .texture(0, 1)
+                    .overlay(OverlayTexture.DEFAULT_UV)
+                    .light(0xF000F0)
+                    .normal(0, 0, 1)
+                    .endVertex();
+
+            vc.vertex(mat, size, -size, 0)
+                    .color(r, g, b, 1f)
+                    .texture(1, 1)
+                    .overlay(OverlayTexture.DEFAULT_UV)
+                    .light(0xF000F0)
+                    .normal(0, 0, 1)
+                    .endVertex();
+
+            vc.vertex(mat, size, size, 0)
+                    .color(r, g, b, 1f)
+                    .texture(1, 0)
+                    .overlay(OverlayTexture.DEFAULT_UV)
+                    .light(0xF000F0)
+                    .normal(0, 0, 1)
+                    .endVertex();
+
+            vc.vertex(mat, -size, size, 0)
+                    .color(r, g, b, 1f)
+                    .texture(0, 0)
+                    .overlay(OverlayTexture.DEFAULT_UV)
+                    .light(0xF000F0)
+                    .normal(0, 0, 1)
+                    .endVertex();
 
             matrices.pop();
         });
     }
-}
+}.
