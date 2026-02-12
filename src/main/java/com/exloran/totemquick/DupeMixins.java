@@ -6,24 +6,20 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
+import com.mojang.blaze3d.systems.RenderSystem;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(Screen.class)
 public abstract class DupeMixins {
 
-    private static final Identifier BASE =
-            Identifier.of("totemquick", "textures/gui/keyboard_hud.png");
-
-    // 🔵 ACTIVE: SADECE MAVİ DOLU (tek renk)
-    private static final Identifier ACTIVE =
-            Identifier.of("totemquick", "textures/gui/keyboard_hud_active.png");
-
-    // BASE texture boyutu
-    private static final int TEX_W = 612;
-    private static final int TEX_H = 408;
+    // 🎯 Target icon (emoji gibi düşün)
+    private static final Identifier TARGET =
+            Identifier.of("totemquick", "textures/gui/target.png");
 
     static {
         HudRenderCallback.EVENT.register((ctx, tick) -> {
@@ -33,63 +29,60 @@ public abstract class DupeMixins {
             TotemQuickConfig cfg =
                     AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
-            if (!cfg.keyboardHudEnabled) return;
+            // İstersen config’e bağlayabilirsin, şimdilik açık varsayalım
+            // if (!cfg.keyboardHudEnabled) return;
+
+            // Crosshair neye bakıyor?
+            HitResult hit = mc.crosshairTarget;
+            if (!(hit instanceof EntityHitResult ehr)) return;
+
+            Entity e = ehr.getEntity();
+            if (!(e instanceof PlayerEntity)) return; // sadece player
+
+            // Ekranın ortası = baktığın nokta (hitbox ortası gibi davranır)
+            int sw = mc.getWindow().getScaledWidth();
+            int sh = mc.getWindow().getScaledHeight();
+            int cx = sw / 2;
+            int cy = sh / 2;
+
+            // Zaman tabanlı animasyon
+            long time = System.currentTimeMillis();
+
+            // Yavaş dönüş
+            float angle = (time % 10000L) / 10000f * 360f;
+
+            // Pembe ↔ Sarı renk geçişi
+            float t = (float) (Math.sin(time / 500.0) * 0.5 + 0.5);
+            float r = 1.0f;
+            float g = 0.5f + 0.5f * t; // sarıya doğru gider
+            float b = 0.7f * (1.0f - t); // pembeden sarıya geçiş hissi
 
             ctx.getMatrices().push();
-            ctx.getMatrices().scale(cfg.keyboardHudScale, cfg.keyboardHudScale, 1f);
 
-            int x = (int) (cfg.keyboardHudX / cfg.keyboardHudScale);
-            int y = (int) (cfg.keyboardHudY / cfg.keyboardHudScale);
+            // Merkeze taşı
+            ctx.getMatrices().translate(cx, cy, 0);
+            // Döndür
+            ctx.getMatrices().multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Z.rotationDegrees(angle));
+            // Geri al (ikon merkezden dönsün)
+            int size = 32;
+            ctx.getMatrices().translate(-size / 2f, -size / 2f, 0);
 
-            // === BASE (GRİ KLAVYE) ===
-            ctx.drawTexture(BASE, x, y, 0, 0, TEX_W, TEX_H, TEX_W, TEX_H);
+            // Renk uygula
+            RenderSystem.setShaderColor(r, g, b, 1.0f);
 
-            long window = mc.getWindow().getHandle();
+            // Çiz
+            ctx.drawTexture(
+                    TARGET,
+                    0, 0,
+                    0, 0,
+                    size, size,
+                    size, size
+            );
 
-            // === KLAVYE ===
-            key(ctx, window, GLFW.GLFW_KEY_W,     x + 150, y + 130, 70, 70);
-            key(ctx, window, GLFW.GLFW_KEY_A,     x + 80,  y + 200, 70, 70);
-            key(ctx, window, GLFW.GLFW_KEY_S,     x + 150, y + 200, 70, 70);
-            key(ctx, window, GLFW.GLFW_KEY_D,     x + 220, y + 200, 70, 70);
-
-            key(ctx, window, GLFW.GLFW_KEY_LEFT_SHIFT, x + 20,  y + 200, 120, 70);
-            key(ctx, window, GLFW.GLFW_KEY_SPACE,      x + 150, y + 290, 220, 70);
-
-            // === NUMARALAR ===
-            key(ctx, window, GLFW.GLFW_KEY_1, x + 120, y + 60, 60, 60);
-            key(ctx, window, GLFW.GLFW_KEY_2, x + 185, y + 60, 60, 60);
-            key(ctx, window, GLFW.GLFW_KEY_3, x + 250, y + 60, 60, 60);
-
-            // === MOUSE ===
-            if (mc.options.attackKey.isPressed()) {
-                drawActive(ctx, x + 420, y + 140, 80, 110); // sol tık
-            }
-            if (mc.options.useKey.isPressed()) {
-                drawActive(ctx, x + 500, y + 140, 80, 110); // sağ tık
-            }
+            // Rengi sıfırla (başka HUD’ları bozmasın)
+            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
             ctx.getMatrices().pop();
         });
     }
-
-    private static void key(DrawContext ctx, long window, int key,
-                            int x, int y, int w, int h) {
-        if (InputUtil.isKeyPressed(window, key)) {
-            drawActive(ctx, x, y, w, h);
-        }
-    }
-
-    /**
-     * 🔥 KRİTİK DÜZELTME:
-     * UV HER ZAMAN 0,0 → texture taşması YOK
-     */
-    private static void drawActive(DrawContext ctx, int x, int y, int w, int h) {
-        ctx.drawTexture(
-                ACTIVE,
-                x, y,           // ekranda çizilecek yer
-                0, 0,           // UV BAŞLANGICI (SABİT)
-                w, h,           // çizim boyutu
-                w, h            // ACTIVE texture boyutu
-        );
-    }
-            }
+}
