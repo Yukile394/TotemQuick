@@ -4,18 +4,14 @@ import com.exloran.totemquick.TotemQuickConfig;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.util.math.RotationAxis;
-import org.spongepowered.asm.mixin.Mixin;
+import org.joml.Quaternionf;
 
-@Mixin(Screen.class)
 public abstract class DupeMixins {
 
     // 🎯 Target icon
@@ -23,7 +19,7 @@ public abstract class DupeMixins {
             Identifier.of("totemquick", "textures/gui/target.png");
 
     static {
-        HudRenderCallback.EVENT.register((DrawContext ctx, float tick) -> {
+        HudRenderCallback.EVENT.register((ctx, tick) -> {
             MinecraftClient mc = MinecraftClient.getInstance();
             if (mc.player == null || mc.currentScreen != null) return;
 
@@ -45,8 +41,9 @@ public abstract class DupeMixins {
 
             long time = System.currentTimeMillis();
 
-            // Yavaş dönüş
-            float angle = (time % 10000L) / 10000f * 360f;
+            // Yavaş dönüş (derece)
+            float angleDeg = (time % 10000L) / 10000f * 360f;
+            float angleRad = (float) Math.toRadians(angleDeg);
 
             // Renk animasyonu
             float t = (float) (Math.sin(time / 500.0) * 0.5 + 0.5);
@@ -58,10 +55,12 @@ public abstract class DupeMixins {
 
             // Merkeze taşı
             ctx.getMatrices().translate(cx, cy, 0);
-            // Döndür
-            ctx.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(angle));
 
-            int size = 32;
+            // ✅ 1.21 uyumlu dönüş (Quaternionf ile)
+            ctx.getMatrices().multiply(new Quaternionf().rotateZ(angleRad));
+
+            int size = 64; // 🔥 Büyüttüm (32 yerine 64)
+
             // Merkezden dönmesi için geri al
             ctx.getMatrices().translate(-size / 2f, -size / 2f, 0);
 
