@@ -18,22 +18,6 @@ public class TotemQuickConfig implements ConfigData {
     // Totem yok uyarı rengi
     public String uyarirengi = "red";
 
-    /* ================== KEYBOARD HUD ================== */
-
-    // HUD açık mı
-    public boolean keyboardHudEnabled = true;
-
-    // HUD boyutu (0.3 = küçük, 1.0 = büyük)
-    public float keyboardHudScale = 0.45f;
-
-    // HUD X konumu
-    public int keyboardHudX = 10;
-
-    // HUD Y konumu
-    public int keyboardHudY = 20;
-
-    /* -------------------------------------------------- */
-
     public static Formatting parseColor(String color) {
         if (color == null || color.isBlank()) return Formatting.RED;
         Formatting f = Formatting.byName(color.toLowerCase());
