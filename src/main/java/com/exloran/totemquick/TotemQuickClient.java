@@ -11,17 +11,12 @@ import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-// EKLEDİK
-import com.exloran.totemquick.hud.TargetHud;
-
 public class TotemQuickClient implements ClientModInitializer {
+
     private static KeyBinding totemKey;
 
     @Override
     public void onInitializeClient() {
-
-        // ✅ HUD başlat
-        TargetHud.init();
 
         totemKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.totemquick.swap",
@@ -42,18 +37,18 @@ public class TotemQuickClient implements ClientModInitializer {
 
         var inv = client.player.getInventory();
 
-        // Envanterde totem ara (main inventory)
         int totemSlot = -1;
+
+        // Ana envanterde totem ara
         for (int i = 0; i < inv.main.size(); i++) {
-            ItemStack s = inv.main.get(i);
-            if (!s.isEmpty() && s.getItem() == Items.TOTEM_OF_UNDYING) {
+            ItemStack stack = inv.main.get(i);
+            if (!stack.isEmpty() && stack.getItem() == Items.TOTEM_OF_UNDYING) {
                 totemSlot = i;
                 break;
             }
         }
 
         if (totemSlot == -1) {
-            // action bar (true) mesajı
             client.player.sendMessage(Text.literal("Envanterinde Totem yok!"), true);
             return;
         }
@@ -62,12 +57,10 @@ public class TotemQuickClient implements ClientModInitializer {
         ItemStack offhandStack = inv.offHand.get(0);
 
         if (offhandStack.isEmpty()) {
-            // Offhand boş -> totemi oraya koy
             inv.offHand.set(0, totemStack.copy());
             inv.main.set(totemSlot, ItemStack.EMPTY);
             client.player.sendMessage(Text.literal("Totem offhand'e kondu."), false);
         } else {
-            // Offhand dolu -> swap
             inv.main.set(totemSlot, offhandStack.copy());
             inv.offHand.set(0, totemStack.copy());
             client.player.sendMessage(Text.literal("Totem ile offhand takas edildi."), false);
