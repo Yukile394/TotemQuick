@@ -1,0 +1,13 @@
+{
+  "text.autoconfig.totemquick.title": "TotemQuick Settings",
+
+  "text.autoconfig.totemquick.option.enabled": "Mod Enabled",
+  "text.autoconfig.totemquick.option.sesliUyari": "Sound Notification",
+  "text.autoconfig.totemquick.option.uyarirengi": "Warning Color",
+  "text.autoconfig.totemquick.option.elytraGizle": "Hide Elytra",
+
+  "text.autoconfig.totemquick.option.enabled.@Tooltip": "Enables or disables the TotemQuick mod",
+  "text.autoconfig.totemquick.option.sesliUyari.@Tooltip": "Plays a sound when the totem is equipped or runs out",
+  "text.autoconfig.totemquick.option.uyarirengi.@Tooltip": "Color of the message shown when the totem runs out (example: red, yellow, purple)",
+  "text.autoconfig.totemquick.option.elytraGizle.@Tooltip": "Hides the Elytra model on the player's back"
+}
