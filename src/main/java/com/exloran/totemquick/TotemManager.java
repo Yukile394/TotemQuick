@@ -138,7 +138,7 @@ public class TotemManager {
 
         if (config.sesliUyari) {
             client.player.playSound(
-                SoundEvents.ITEM_ARMOR_EQUIP_GENERIC,
+                SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(),
                 1.0f,
                 1.5f
             );
