@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.sound.SoundEvents;
@@ -18,12 +17,8 @@ public class TotemManager {
 
     public static KeyBinding keyL;
 
-    private static int cooldownTicks = 0;
-    private static final int SWAP_COOLDOWN   = 10;  // normal swap sonrası: 0.5s
-    private static final int TOTEM_POP_DELAY = 40;  // totem patladıktan sonra: 2s bekle
-
-    // Önceki tick'te offhand'de totem var mıydı? (patlama tespiti için)
-    private static boolean hadTotemLastTick = false;
+    // "Totem bitti" spam'ini önlemek için
+    private static int warnCooldown = 0;
 
     public static void init() {
         keyL = KeyBindingHelper.registerKeyBinding(
@@ -38,12 +33,11 @@ public class TotemManager {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.interactionManager == null) return;
 
-            if (cooldownTicks > 0) cooldownTicks--;
+            if (warnCooldown > 0) warnCooldown--;
 
             TotemQuickConfig config =
                 AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
 
-            // Toggle tuşu
             while (keyL.wasPressed()) {
                 config.enabled = !config.enabled;
                 String durum = config.enabled ? "§a§lAÇIK" : "§c§lKAPALI";
@@ -57,31 +51,21 @@ public class TotemManager {
                     );
                 }
             }
-
-            // Offhand'deki mevcut durum
-            ItemStack offhand = client.player.getOffHandStack();
-            boolean hasTotemNow = offhand.isOf(Items.TOTEM_OF_UNDYING);
-
-            // PATLAMA TESPİTİ:
-            // Geçen tick totem vardı, bu tick yok → totem patladı
-            // Ekstra kontrol: oyuncunun canı 1 kalp civarında veya
-            // absorpsiyon efekti var (totem efekti) — ama en basit yol
-            // sadece "vardı → yok" geçişini yakalamak.
-            if (hadTotemLastTick && !hasTotemNow) {
-                // Totem patladı, sunucunun işlemesi için uzun cooldown koy
-                cooldownTicks = TOTEM_POP_DELAY;
-            }
-
-            hadTotemLastTick = hasTotemNow;
-
-            // Swap logic: cooldown bitti + offhand'de totem yok
-            if (config.enabled && cooldownTicks == 0 && !hasTotemNow) {
-                logic(client, config);
-            }
         });
     }
 
-    private static void logic(MinecraftClient client, TotemQuickConfig config) {
+    /**
+     * Totem patlama packet'i geldiğinde Mixin'den çağrılır.
+     * Bu noktada sunucu zaten "totem kullanıldı" dedi,
+     * offhand'i boşaltacak — biz hemen yenisini koyuyoruz.
+     */
+    public static void onTotemPop(MinecraftClient client) {
+        if (client.player == null || client.interactionManager == null) return;
+
+        TotemQuickConfig config =
+            AutoConfig.getConfigHolder(TotemQuickConfig.class).getConfig();
+        if (!config.enabled) return;
+
         var inv = client.player.getInventory();
 
         int slot = -1;
@@ -93,29 +77,29 @@ public class TotemManager {
         }
 
         if (slot == -1) {
-            Formatting renk = Formatting.byName(config.uyarirengi.toLowerCase());
-            if (renk == null) renk = Formatting.RED;
-            client.player.sendMessage(
-                Text.literal("⚠ TOTEM BİTTİ!").formatted(Formatting.BOLD, renk), true
-            );
-            if (config.sesliUyari) {
-                client.player.playSound(SoundEvents.BLOCK_BELL_RESONATE, 1.0f, 0.8f);
+            if (warnCooldown == 0) {
+                Formatting renk = Formatting.byName(config.uyarirengi.toLowerCase());
+                if (renk == null) renk = Formatting.RED;
+                client.player.sendMessage(
+                    Text.literal("⚠ TOTEM BİTTİ!").formatted(Formatting.BOLD, renk), true
+                );
+                if (config.sesliUyari) {
+                    client.player.playSound(SoundEvents.BLOCK_BELL_RESONATE, 1.0f, 0.8f);
+                }
+                warnCooldown = 20;
             }
             return;
         }
 
-        // syncSlot: hotbar(0-8) → +36, main(9-35) → direkt
         int syncSlot = (slot < 9) ? slot + 36 : slot;
 
         client.interactionManager.clickSlot(
             client.player.currentScreenHandler.syncId,
             syncSlot,
-            40,                   // F tuşu = offhand swap
+            40,
             SlotActionType.SWAP,
             client.player
         );
-
-        cooldownTicks = SWAP_COOLDOWN;
 
         if (config.sesliUyari) {
             client.player.playSound(
