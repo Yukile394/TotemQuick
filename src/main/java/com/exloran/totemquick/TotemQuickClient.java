@@ -79,7 +79,7 @@ public class TotemQuickClient implements ClientModInitializer {
             client.player
         );
 
-        client.player.playSound(SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 1.0f, 1.5f);
+        client.player.playSound(SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(), 1.0f, 1.5f);
         client.player.sendMessage(
             Text.literal("§a§l✔ Totem offhand'e alındı!"),
             true
