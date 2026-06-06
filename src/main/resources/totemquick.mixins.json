@@ -5,6 +5,7 @@
   "mixins": [],
   "client": [
     "ScreenAccessor",
+    "TotemPopMixin"
   ],
   "injectors": {
     "defaultRequire": 1
